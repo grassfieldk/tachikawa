@@ -1,0 +1,34 @@
+---
+import { listEvents, listPlaces } from '../../data';
+import { PLACE_KINDS } from '../../data/labels';
+import type { PlaceKind } from '../../data/types';
+import Base from '../../layouts/Base.astro';
+import { eventMarkers, placeMarkers } from '../../lib/markers';
+import { eventView, placeView } from '../../lib/views';
+import { MapPageView } from '../../views/ListViews';
+
+const param = Astro.url.searchParams.get('kind');
+const kind = param && param in PLACE_KINDS ? (param as PlaceKind) : undefined;
+const eventsOnly = param === 'event';
+
+const places = eventsOnly ? [] : await listPlaces({ kind });
+const events = !param || eventsOnly ? await listEvents({ when: 'month' }) : [];
+const markers = [...placeMarkers(places), ...eventMarkers(events)];
+
+const options = [
+  ...Object.entries(PLACE_KINDS).map(([value, label]) => ({ value, label })),
+  { value: 'event', label: 'イベント会場（30 日以内）' },
+];
+const now = new Date();
+---
+
+<Base title="マップ" description="立川市内の施設、お店、避難所、イベント会場の地図">
+  <MapPageView
+    client:load
+    markers={markers}
+    places={places.map(placeView)}
+    events={events.map((e) => eventView(e, now))}
+    fields={[{ label: '表示', param: 'kind', options }]}
+    search={Astro.url.search}
+  />
+</Base>

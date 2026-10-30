@@ -1,0 +1,42 @@
+---
+import { lastUpdatedAt, listArticles, listChanges, listEvents, listPlaces, listSources } from '../data';
+import Base from '../layouts/Base.astro';
+import { formatDateTime, formatLongDate } from '../lib/format';
+import { eventMarkers, placeMarkers } from '../lib/markers';
+import { articleView, changeView, eventView, sourceView } from '../lib/views';
+import HomeView from '../views/HomeView';
+
+const now = new Date();
+const [todayEvents, weekEvents, articles, changes, safety, places, sources, updated] =
+  await Promise.all([
+    listEvents({ when: 'today' }),
+    listEvents({ when: 'week', limit: 6 }),
+    listArticles({ limit: 6 }),
+    listChanges({ limit: 5 }),
+    listArticles({ category: 'safety', limit: 3 }),
+    listPlaces(),
+    listSources(),
+    lastUpdatedAt(),
+  ]);
+
+const alerts = safety.filter((a) => now.getTime() - a.publishedAt.getTime() < 48 * 3600 * 1000);
+const markers = [
+  ...eventMarkers(weekEvents),
+  ...placeMarkers(places.filter((p) => ['station', 'facility'].includes(p.kind))),
+];
+---
+
+<Base>
+  <HomeView
+    client:load
+    today={formatLongDate(now)}
+    todayCount={todayEvents.length}
+    weekEvents={weekEvents.map((e) => eventView(e, now))}
+    articles={articles.map((a) => articleView(a, now))}
+    alerts={alerts.map((a) => articleView(a, now))}
+    changes={changes.map((c) => changeView(c, now))}
+    failedSources={sources.filter((s) => s.lastStatus !== 'success').map((s) => sourceView(s, now))}
+    updated={updated ? formatDateTime(updated) : null}
+    markers={markers}
+  />
+</Base>

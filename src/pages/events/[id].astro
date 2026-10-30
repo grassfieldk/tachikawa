@@ -1,0 +1,24 @@
+---
+import { areaOf, getEvent, listEvents } from '../../data';
+import Base from '../../layouts/Base.astro';
+import { eventMarkers } from '../../lib/markers';
+import { eventView } from '../../lib/views';
+import { EventDetailView } from '../../views/DetailViews';
+
+const id = Number(Astro.params.id);
+const event = Number.isInteger(id) ? await getEvent(id) : null;
+if (!event) return Astro.rewrite('/404');
+
+const now = new Date();
+const area = areaOf(event.areaId);
+const nearby = (await listEvents({ areaSlug: area?.code })).filter((e) => e.id !== event.id).slice(0, 5);
+---
+
+<Base title={event.title} description={event.description}>
+  <EventDetailView
+    client:load
+    event={eventView(event, now)}
+    markers={eventMarkers([event])}
+    nearby={nearby.map((e) => eventView(e, now))}
+  />
+</Base>

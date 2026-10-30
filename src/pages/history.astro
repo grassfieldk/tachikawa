@@ -1,0 +1,84 @@
+---
+import Base from '../layouts/Base.astro';
+import { HistoryView } from '../views/StaticViews';
+
+export const prerender = true;
+
+interface Entry {
+  year: string;
+  title: string;
+  body: string;
+  photo?: string;
+}
+
+interface Era {
+  name: string;
+  entries: Entry[];
+}
+
+// 年号と本文はダミー（公開前に出典と照合する）
+const eras: Era[] = [
+  {
+    name: '近代',
+    entries: [
+      {
+        year: '1889',
+        title: '甲武鉄道の立川駅が開業',
+        body: '甲武鉄道の駅として立川駅が開業する。',
+      },
+      {
+        year: '1922',
+        title: '立川飛行場が開設',
+        body: '陸軍の飛行場が開設され、周辺に航空機関連の工場や施設ができる。',
+        photo: '当時の航空写真や古地図',
+      },
+      {
+        year: '1940',
+        title: '市制を施行',
+        body: '立川町が市制を施行し、立川市になる。',
+      },
+    ],
+  },
+  {
+    name: '戦後',
+    entries: [
+      {
+        year: '1945',
+        title: '飛行場が米軍に接収される',
+        body: '終戦後、飛行場が米軍に接収される。',
+      },
+      {
+        year: '1977',
+        title: '基地が全面返還される',
+        body: '跡地は後に公園、官公庁、商業地として整備される。',
+        photo: '返還当時の写真',
+      },
+      {
+        year: '1983',
+        title: '昭和記念公園が開園',
+        body: '基地跡地の一部に国営昭和記念公園が開園する。',
+        photo: '開園当時の写真',
+      },
+    ],
+  },
+  {
+    name: '現代',
+    entries: [
+      {
+        year: '1998',
+        title: '多摩モノレールが開業',
+        body: '立川北駅、立川南駅を含む区間で多摩モノレールが開業する。',
+      },
+      {
+        year: '2000 年代以降',
+        title: '駅周辺の再開発',
+        body: '駅周辺に大型の商業施設や文化施設が相次いで開業する。',
+      },
+    ],
+  },
+];
+---
+
+<Base title="歴史" description="立川市の年表">
+  <HistoryView eras={eras} />
+</Base>

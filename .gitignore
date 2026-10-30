@@ -12,7 +12,7 @@ mise.local.toml
 # 実データ
 *.dump
 *.sql.gz
-data/
+/data/
 logs/
 
 # 実環境用に生成した設定（雛形は deploy/ に置く）

@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import { AccessView } from '../views/StaticViews';
+
+export const prerender = true;
+
+// 内容はダミー
+const modes = [
+  {
+    name: '鉄道',
+    text: 'JR 中央線、青梅線、南武線が乗り入れる。',
+    stops: ['立川駅'],
+    source: '公共交通オープンデータセンター（予定）',
+  },
+  {
+    name: 'モノレール',
+    text: '市内を南北に走る。立川駅の北側に立川北駅、南側に立川南駅がある。',
+    stops: ['立川北駅', '立川南駅'],
+    source: '公共交通オープンデータセンター（予定）',
+  },
+  {
+    name: '路線バス',
+    text: '立川駅の北口と南口から、市内各地と近隣の市への路線が出ている。',
+    stops: ['北口バスのりば', '南口バスのりば'],
+    source: '事業者の公式サイト（予定）',
+  },
+  {
+    name: 'コミュニティバス',
+    text: '市が運行するバス。住宅地と公共施設、病院を結ぶ。',
+    stops: ['市役所', '図書館', '体育館'],
+    source: '市の公式サイト（予定）',
+  },
+  {
+    name: '主要な道路',
+    text: '東西の幹線道路と南北の道路が駅周辺で交わる。',
+    stops: ['中央通り'],
+    source: '国土数値情報（予定）',
+  },
+];
+---
+
+<Base title="交通" description="立川市の鉄道、モノレール、バス、道路">
+  <AccessView modes={modes} />
+</Base>

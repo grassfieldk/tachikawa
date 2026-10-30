@@ -1,0 +1,21 @@
+---
+import { listAreas } from '../../data';
+import type { MapMarker } from '../../data/types';
+import Base from '../../layouts/Base.astro';
+import { AreasView } from '../../views/DetailViews';
+
+const areas = await listAreas();
+const markers: MapMarker[] = areas.map((a) => ({
+  id: `area-${a.code}`,
+  lng: a.center[0],
+  lat: a.center[1],
+  title: a.name,
+  subtitle: a.features.join('・'),
+  href: `/areas/${a.code}`,
+  kind: 'area',
+}));
+---
+
+<Base title="地区ガイド" description="立川市の町ごとの概要と、施設・イベント">
+  <AreasView client:load areas={areas} markers={markers} />
+</Base>

@@ -1,0 +1,24 @@
+---
+import { listChanges } from '../../data';
+import { CHANGE_TYPES } from '../../data/labels';
+import type { PlaceChangeType } from '../../data/types';
+import Base from '../../layouts/Base.astro';
+import { changeView } from '../../lib/views';
+import { ChangesView } from '../../views/ListViews';
+
+const param = Astro.url.searchParams.get('type');
+const type = param && param in CHANGE_TYPES ? (param as PlaceChangeType) : undefined;
+const now = new Date();
+const changes = (await listChanges({ type })).map((c) => changeView(c, now));
+
+const options = Object.entries(CHANGE_TYPES).map(([value, label]) => ({ value, label }));
+---
+
+<Base title="開店・閉店" description="立川市内のお店の開店・閉店・移転・改装">
+  <ChangesView
+    client:load
+    changes={changes}
+    fields={[{ label: '種類', param: 'type', options }]}
+    search={Astro.url.search}
+  />
+</Base>

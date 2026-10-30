@@ -1,0 +1,33 @@
+---
+import { listArticles } from '../../data';
+import { ARTICLE_CATEGORIES } from '../../data/labels';
+import type { ArticleCategory } from '../../data/types';
+import Base from '../../layouts/Base.astro';
+import { formatMonthLabel } from '../../lib/format';
+import { articleView, type ArticleView } from '../../lib/views';
+import { NewsView } from '../../views/ListViews';
+
+const param = Astro.url.searchParams.get('category');
+const category = param && param in ARTICLE_CATEGORIES ? (param as ArticleCategory) : undefined;
+const articles = (await listArticles({ category })).map((a) => articleView(a));
+
+const groups: { label: string; items: ArticleView[] }[] = [];
+for (const a of articles) {
+  const label = formatMonthLabel(a.publishedAt);
+  const last = groups.at(-1);
+  if (last?.label === label) last.items.push(a);
+  else groups.push({ label, items: [a] });
+}
+
+const options = Object.entries(ARTICLE_CATEGORIES).map(([value, label]) => ({ value, label }));
+---
+
+<Base title="お知らせ" description="立川市と地域のお知らせ">
+  <NewsView
+    client:load
+    groups={groups}
+    total={articles.length}
+    fields={[{ label: '分類', param: 'category', options }]}
+    search={Astro.url.search}
+  />
+</Base>

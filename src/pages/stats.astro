@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+import { StatsView } from '../views/StaticViews';
+
+export const prerender = true;
+
+// 数値はすべてダミー
+const population = [
+  { label: '2016', value: 180200 },
+  { label: '2017', value: 181000 },
+  { label: '2018', value: 182100 },
+  { label: '2019', value: 183000 },
+  { label: '2020', value: 183900 },
+  { label: '2021', value: 184200 },
+  { label: '2022', value: 184700 },
+  { label: '2023', value: 185300 },
+  { label: '2024', value: 185900 },
+  { label: '2025', value: 186400 },
+];
+
+const households = [
+  { label: '2016', value: 85100 },
+  { label: '2018', value: 87200 },
+  { label: '2020', value: 89400 },
+  { label: '2022', value: 91000 },
+  { label: '2024', value: 92600 },
+];
+
+const ages = [
+  { label: '15 歳未満', value: 12 },
+  { label: '15 から 64 歳', value: 63 },
+  { label: '65 歳以上', value: 25 },
+];
+
+const figures = [
+  { label: '人口', value: '約 18.6 万人' },
+  { label: '世帯数', value: '約 9.3 万世帯' },
+  { label: '面積', value: '約 24 km²' },
+  { label: '高齢化率', value: '約 25 %' },
+];
+---
+
+<Base title="統計" description="立川市の人口、世帯数、年齢構成">
+  <StatsView figures={figures} population={population} households={households} ages={ages} />
+</Base>

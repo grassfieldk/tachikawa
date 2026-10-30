@@ -1,0 +1,44 @@
+---
+import { listAreas, listEvents } from '../../data';
+import type { EventWhen } from '../../data';
+import { EVENT_CATEGORIES } from '../../data/labels';
+import type { EventCategory } from '../../data/types';
+import Base from '../../layouts/Base.astro';
+import { eventView } from '../../lib/views';
+import { EventsView } from '../../views/ListViews';
+
+const WHEN_OPTIONS: { value: EventWhen; label: string }[] = [
+  { value: 'today', label: '今日' },
+  { value: 'weekend', label: '今週末' },
+  { value: 'week', label: '7 日以内' },
+  { value: 'month', label: '30 日以内' },
+  { value: 'past', label: '終了したイベント' },
+];
+
+const q = Astro.url.searchParams;
+const when = WHEN_OPTIONS.find((o) => o.value === q.get('when'))?.value ?? 'upcoming';
+const categoryParam = q.get('category');
+const category =
+  categoryParam && categoryParam in EVENT_CATEGORIES ? (categoryParam as EventCategory) : undefined;
+const areas = await listAreas();
+const areaSlug = areas.find((a) => a.code === q.get('area'))?.code;
+
+const now = new Date();
+const events = (await listEvents({ when, category, areaSlug })).map((e) => eventView(e, now));
+
+const categoryOptions = Object.entries(EVENT_CATEGORIES).map(([value, label]) => ({ value, label }));
+const areaOptions = areas.map((a) => ({ value: a.code, label: a.name }));
+---
+
+<Base title="イベント" description="立川市内のイベント一覧">
+  <EventsView
+    client:load
+    events={events}
+    fields={[
+      { label: '開催日', param: 'when', options: WHEN_OPTIONS, allLabel: 'これから' },
+      { label: '分類', param: 'category', options: categoryOptions },
+      { label: '地区', param: 'area', options: areaOptions },
+    ]}
+    search={Astro.url.search}
+  />
+</Base>

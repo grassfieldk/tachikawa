@@ -1,0 +1,20 @@
+---
+import { search } from '../data';
+import Base from '../layouts/Base.astro';
+import { articleView, eventView, placeView } from '../lib/views';
+import { SearchView } from '../views/ListViews';
+
+const q = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 100);
+const result = await search(q);
+const now = new Date();
+---
+
+<Base title={q ? `「${q}」の検索結果` : '検索'}>
+  <SearchView
+    client:load
+    q={q}
+    articles={result.articles.map((a) => articleView(a, now))}
+    events={result.events.map((e) => eventView(e, now))}
+    places={result.places.map(placeView)}
+  />
+</Base>

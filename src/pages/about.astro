@@ -1,0 +1,13 @@
+---
+import { listSources } from '../data';
+import Base from '../layouts/Base.astro';
+import { sourceView } from '../lib/views';
+import { AboutView } from '../views/StaticViews';
+
+const now = new Date();
+const sources = (await listSources()).map((s) => sourceView(s, now));
+---
+
+<Base title="サイトについて" description="運営方針、情報源、更新状況">
+  <AboutView sources={sources} />
+</Base>

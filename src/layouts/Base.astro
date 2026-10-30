@@ -1,0 +1,41 @@
+---
+import '@mantine/core/styles.css';
+import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core';
+import SiteFooter from '../components/SiteFooter';
+import SiteHeader from '../components/SiteHeader';
+import { IS_DUMMY_DATA, SITE_DESCRIPTION, SITE_NAME } from '../config';
+import { lastUpdatedAt } from '../data';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = SITE_DESCRIPTION } = Astro.props;
+const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+const updated = await lastUpdatedAt();
+---
+
+<!doctype html>
+<html lang="ja" {...mantineHtmlProps}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{fullTitle}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=Noto+Sans+JP:wght@400..700&display=swap"
+    />
+    <ColorSchemeScript defaultColorScheme="auto" />
+  </head>
+  <body>
+    <SiteHeader client:load siteName={SITE_NAME} path={Astro.url.pathname} isDummy={IS_DUMMY_DATA} />
+    <main>
+      <slot />
+    </main>
+    <SiteFooter siteName={SITE_NAME} updated={updated} />
+  </body>
+</html>
