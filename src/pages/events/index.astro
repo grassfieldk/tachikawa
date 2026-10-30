@@ -1,0 +1,61 @@
+---
+import EventCard from '../../components/EventCard.astro';
+import FilterChips from '../../components/FilterChips.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { listAreas, listEvents } from '../../data';
+import type { EventWhen } from '../../data';
+import { EVENT_CATEGORIES } from '../../data/labels';
+import type { EventCategory } from '../../data/types';
+import Base from '../../layouts/Base.astro';
+
+const WHEN_OPTIONS: { value: EventWhen; label: string }[] = [
+  { value: 'today', label: '今日' },
+  { value: 'weekend', label: '今週末' },
+  { value: 'week', label: '7 日以内' },
+  { value: 'month', label: '30 日以内' },
+  { value: 'past', label: '終了したイベント' },
+];
+
+const q = Astro.url.searchParams;
+const whenParam = q.get('when');
+const when = WHEN_OPTIONS.find((o) => o.value === whenParam)?.value ?? 'upcoming';
+const categoryParam = q.get('category');
+const category =
+  categoryParam && categoryParam in EVENT_CATEGORIES ? (categoryParam as EventCategory) : undefined;
+const areas = await listAreas();
+const areaSlug = areas.find((a) => a.code === q.get('area'))?.code;
+
+const events = await listEvents({ when, category, areaSlug });
+
+const categoryOptions = Object.entries(EVENT_CATEGORIES).map(([value, c]) => ({
+  value,
+  label: c.label,
+}));
+const areaOptions = areas.map((a) => ({ value: a.code, label: a.name }));
+---
+
+<Base title="イベント" description="立川市内で開かれるイベントの一覧">
+  <PageHeader
+    title="イベント"
+    lead="市内で開かれるイベントを、日付や分類、地区で絞り込めます。"
+    crumbs={[{ label: 'イベント' }]}
+  />
+  <div class="container section stack" style="--gap: 20px">
+    <div class="card filters stack" style="--gap: 12px">
+      <FilterChips label="開催日" param="when" options={WHEN_OPTIONS} allLabel="これから" />
+      <FilterChips label="分類" param="category" options={categoryOptions} />
+      <FilterChips label="地区" param="area" options={areaOptions} />
+    </div>
+
+    <p class="small muted">{events.length} 件</p>
+    {
+      events.length > 0 ? (
+        <div class="grid grid-2">
+          {events.map((e) => <EventCard event={e} />)}
+        </div>
+      ) : (
+        <p class="empty">条件に合うイベントはありません。条件をゆるめてみてください</p>
+      )
+    }
+  </div>
+</Base>

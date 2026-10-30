@@ -1,0 +1,166 @@
+---
+import BarChart from '../components/BarChart.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Base from '../layouts/Base.astro';
+
+export const prerender = true;
+
+// 数値はすべてダミー
+const population = [
+  { label: '2016', value: 180200 },
+  { label: '2017', value: 181000 },
+  { label: '2018', value: 182100 },
+  { label: '2019', value: 183000 },
+  { label: '2020', value: 183900 },
+  { label: '2021', value: 184200 },
+  { label: '2022', value: 184700 },
+  { label: '2023', value: 185300 },
+  { label: '2024', value: 185900 },
+  { label: '2025', value: 186400 },
+];
+
+const households = [
+  { label: '2016', value: 85100 },
+  { label: '2018', value: 87200 },
+  { label: '2020', value: 89400 },
+  { label: '2022', value: 91000 },
+  { label: '2024', value: 92600 },
+];
+
+const ages = [
+  { label: '15 歳未満', value: 12, tone: 'var(--tone-blue-fg)' },
+  { label: '15 から 64 歳', value: 63, tone: 'var(--accent)' },
+  { label: '65 歳以上', value: 25, tone: 'var(--tone-amber-fg)' },
+];
+
+const figures = [
+  { label: '人口', value: '約 18.6 万人' },
+  { label: '世帯数', value: '約 9.3 万世帯' },
+  { label: '面積', value: '約 24 km²' },
+  { label: '高齢化率', value: '約 25 %' },
+];
+---
+
+<Base title="統計" description="人口や世帯数など、数字で見る立川">
+  <PageHeader
+    title="統計"
+    lead="人口や世帯数、年齢の構成を、グラフで見られるようにします。"
+    crumbs={[{ label: '街を知る', href: '/town' }, { label: '統計' }]}
+  />
+  <div class="container section stack" style="--gap: 24px">
+    <p class="note small">
+      数値はすべてダミーです。公開時は e-Stat（政府統計の総合窓口）の公開データから取得します。
+    </p>
+
+    <ul class="grid grid-4 figures">
+      {
+        figures.map((f) => (
+          <li class="card">
+            <p class="small muted">{f.label}</p>
+            <p class="value">{f.value}</p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="grid grid-2">
+      <section class="card">
+        <h2>人口の推移</h2>
+        <BarChart
+          data={population}
+          scale={10000}
+          unit="万"
+          digits={1}
+          caption="各年 10 月 1 日時点（人）"
+          min={170000}
+        />
+      </section>
+      <section class="card">
+        <h2>世帯数の推移</h2>
+        <BarChart
+          data={households}
+          scale={10000}
+          unit="万"
+          digits={1}
+          caption="各年 10 月 1 日時点（世帯）"
+          min={80000}
+        />
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>年齢の構成</h2>
+      <div
+        class="stacked"
+        role="img"
+        aria-label={ages.map((a) => `${a.label} ${a.value}%`).join('、')}
+      >
+        {ages.map((a) => <span style={`flex: ${a.value}; background: ${a.tone}`}>{a.value}%</span>)}
+      </div>
+      <ul class="legend small">
+        {
+          ages.map((a) => (
+            <li>
+              <span class="dot" style={`background: ${a.tone}`}></span>
+              {a.label}
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .note {
+    padding: 10px 14px;
+    background: var(--tone-amber-bg);
+    color: var(--tone-amber-fg);
+    border-radius: var(--radius-sm);
+  }
+
+  h2 {
+    font-size: 1.0625rem;
+    margin-bottom: 12px;
+  }
+
+  .value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+
+  .stacked {
+    display: flex;
+    height: 40px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .stacked span {
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin-top: 10px;
+  }
+
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+</style>

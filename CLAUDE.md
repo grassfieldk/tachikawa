@@ -12,8 +12,17 @@
 
 ## ブランチ
 
-作業用ブランチは作らず、`main` に直接コミットして push する。
+作業用ブランチは作らず、`main` を使う。コミットと push は、ユーザーが指示するまで行わない。
 
 ## 開発環境
 
 Node.js などのツールは mise で管理する。
+
+## 開発コマンド
+
+- `npm install`: 依存の取得
+- `npm run dev`: 開発サーバー
+- `npm run check`: 型チェック
+- `npm run build` と `npm run start`: 本番ビルドと起動（待ち受けは環境変数 `HOST` と `PORT` で指定）
+
+表示しているデータは `src/data/` のダミーデータ。データの取り出し口は `src/data/index.ts` に集約している。

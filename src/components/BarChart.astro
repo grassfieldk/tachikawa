@@ -1,0 +1,83 @@
+---
+interface Datum {
+  label: string;
+  value: number;
+}
+
+interface Props {
+  data: Datum[];
+  caption: string;
+  // 表示する値を scale で割って、単位を付ける（例: scale=10000, unit="万"）
+  scale?: number;
+  unit?: string;
+  digits?: number;
+  // 縦軸の下限。差が見えるよう 0 以外にしたいときに使う
+  min?: number;
+}
+
+const { data, caption, scale = 1, unit = '', digits = 0, min = 0 } = Astro.props;
+const max = Math.max(...data.map((d) => d.value));
+const ratio = (v: number) => Math.max(4, ((v - min) / (max - min || 1)) * 100);
+const show = (v: number) =>
+  `${(v / scale).toLocaleString('ja-JP', { minimumFractionDigits: digits, maximumFractionDigits: digits })}${unit}`;
+---
+
+<figure>
+  <figcaption class="small muted">{caption}</figcaption>
+  <ul class="bars" role="list">
+    {
+      data.map((d) => (
+        <li title={`${d.label}: ${d.value.toLocaleString('ja-JP')}`}>
+          <span class="val">{show(d.value)}</span>
+          <span class="bar" style={`height: ${ratio(d.value)}%`}></span>
+          <span class="lab muted">{d.label}</span>
+        </li>
+      ))
+    }
+  </ul>
+</figure>
+
+<style>
+  figure {
+    margin: 0;
+  }
+
+  figcaption {
+    margin-bottom: 8px;
+  }
+
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 196px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  li {
+    flex: 1;
+    min-width: 40px;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    justify-items: center;
+    gap: 4px;
+  }
+
+  .bar {
+    align-self: end;
+    width: 100%;
+    max-width: 44px;
+    background: var(--accent);
+    border-radius: 6px 6px 0 0;
+    opacity: 0.85;
+  }
+
+  .val,
+  .lab {
+    font-size: 0.6875rem;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+</style>

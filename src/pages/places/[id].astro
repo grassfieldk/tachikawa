@@ -1,0 +1,145 @@
+---
+import Badge from '../../components/Badge.astro';
+import ChangeList from '../../components/ChangeList.astro';
+import MapView from '../../components/MapView.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import PlaceCard from '../../components/PlaceCard.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import { areaOf, getPlace, listChanges, listPlaces } from '../../data';
+import { PLACE_KINDS, PLACE_STATUSES } from '../../data/labels';
+import Base from '../../layouts/Base.astro';
+import { formatDate } from '../../lib/format';
+import { placeMarkers } from '../../lib/markers';
+
+const id = Number(Astro.params.id);
+const place = Number.isInteger(id) ? await getPlace(id) : null;
+if (!place) return Astro.rewrite('/404');
+
+const kind = PLACE_KINDS[place.kind];
+const status = PLACE_STATUSES[place.status];
+const area = areaOf(place.areaId);
+const changes = (await listChanges()).filter((c) => c.placeId === place.id);
+const nearby = (await listPlaces({ areaSlug: area?.code })).filter((p) => p.id !== place.id).slice(0, 4);
+const attributes = Object.entries(place.attributes);
+---
+
+<Base title={place.name} description={`${place.name}（${kind.label}）`}>
+  <PageHeader
+    title={place.name}
+    crumbs={[{ label: 'マップ', href: '/map' }, { label: place.name }]}
+  />
+  <div class="container section layout">
+    <div class="stack" style="--gap: 20px">
+      <div class="chips">
+        <Badge tone={kind.tone}>{kind.label}</Badge>
+        <Badge tone={status.tone}>{status.label}</Badge>
+      </div>
+      <dl class="facts card">
+        <dt>分類</dt>
+        <dd>{place.category}</dd>
+        {
+          place.address && (
+            <>
+              <dt>住所</dt>
+              <dd>{place.address}</dd>
+            </>
+          )
+        }
+        {
+          area && (
+            <>
+              <dt>地区</dt>
+              <dd>
+                <a href={`/areas/${area.code}`}>{area.name}</a>
+              </dd>
+            </>
+          )
+        }
+        {
+          place.openedOn && (
+            <>
+              <dt>開店</dt>
+              <dd>{formatDate(place.openedOn)}</dd>
+            </>
+          )
+        }
+        {
+          place.closedOn && (
+            <>
+              <dt>閉店</dt>
+              <dd>{formatDate(place.closedOn)}</dd>
+            </>
+          )
+        }
+        {
+          attributes.map(([k, v]) => (
+            <>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </>
+          ))
+        }
+      </dl>
+      {
+        place.websiteUrl && (
+          <p>
+            <a class="btn ghost" href={place.websiteUrl} target="_blank" rel="noopener noreferrer">
+              公式サイト <span aria-hidden="true">↗</span>
+            </a>
+          </p>
+        )
+      }
+      {
+        changes.length > 0 && (
+          <section>
+            <SectionHeading title="開店・閉店の情報" />
+            <ChangeList changes={changes} showNote />
+          </section>
+        )
+      }
+    </div>
+
+    <aside>
+      {
+        place.location ? (
+          <MapView
+            markers={placeMarkers([place])}
+            center={place.location}
+            zoom={16}
+            height="320px"
+            label={`${place.name}の地図`}
+          />
+        ) : (
+          <p class="empty">位置情報はありません</p>
+        )
+      }
+    </aside>
+  </div>
+
+  {
+    nearby.length > 0 && (
+      <section class="section">
+        <div class="container">
+          <SectionHeading title={`${area?.name ?? ''}のほかのスポット`} />
+          <div class="grid grid-2">
+            {nearby.map((p) => <PlaceCard place={p} />)}
+          </div>
+        </div>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  .layout {
+    display: grid;
+    gap: 24px;
+  }
+
+  @media (min-width: 900px) {
+    .layout {
+      grid-template-columns: 3fr 2fr;
+      align-items: start;
+    }
+  }
+</style>

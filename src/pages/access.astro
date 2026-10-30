@@ -1,0 +1,94 @@
+---
+import Badge from '../components/Badge.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Base from '../layouts/Base.astro';
+
+export const prerender = true;
+
+// 内容はダミー
+const modes = [
+  {
+    name: '鉄道',
+    color: '#1b7a4b',
+    text: '立川駅には複数の路線が乗り入れ、都心方面と多摩地域の各方面を結んでいる。',
+    stops: ['立川駅'],
+    source: '公共交通オープンデータセンター（予定）',
+  },
+  {
+    name: 'モノレール',
+    color: '#6b4fb3',
+    text: '市内を南北に走り、駅の北側と南側の両方に駅がある。',
+    stops: ['立川北駅', '立川南駅'],
+    source: '公共交通オープンデータセンター（予定）',
+  },
+  {
+    name: '路線バス',
+    color: '#2f6fb3',
+    text: '駅の北口と南口を起点に、市内各地と近隣の市を結ぶ路線がある。',
+    stops: ['北口バスのりば', '南口バスのりば'],
+    source: '事業者の公式サイト（予定）',
+  },
+  {
+    name: 'コミュニティバス',
+    color: '#c9791a',
+    text: '駅から離れた住宅地と、公共施設や病院を結ぶ市のバス。',
+    stops: ['市役所', '図書館', '体育館'],
+    source: '市の公式サイト（予定）',
+  },
+  {
+    name: '主要な道路',
+    color: '#4b5a52',
+    text: '市内を東西に通る幹線道路と、南北を結ぶ道路が交わる。駅周辺は混雑しやすい。',
+    stops: ['中央通り'],
+    source: '国土数値情報（予定）',
+  },
+];
+---
+
+<Base title="交通" description="立川市の鉄道、モノレール、バス、道路">
+  <PageHeader
+    title="交通"
+    lead="鉄道、モノレール、バス、主要な道路をまとめています。"
+    crumbs={[{ label: '街を知る', href: '/town' }, { label: '交通' }]}
+  />
+  <div class="container section stack" style="--gap: 16px">
+    <p class="note small">この内容はダミーです。データの取得元は各項目の下に表示しています。</p>
+    {
+      modes.map((m) => (
+        <section class="card mode" style={`--c: ${m.color}`}>
+          <h2>{m.name}</h2>
+          <p class="muted">{m.text}</p>
+          <div class="chips stops">
+            {m.stops.map((s) => (
+              <Badge>{s}</Badge>
+            ))}
+          </div>
+          <p class="small muted">データ元: {m.source}</p>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .note {
+    padding: 10px 14px;
+    background: var(--tone-amber-bg);
+    color: var(--tone-amber-fg);
+    border-radius: var(--radius-sm);
+  }
+
+  .mode {
+    display: grid;
+    gap: 8px;
+    border-left: 6px solid var(--c);
+  }
+
+  h2 {
+    font-size: 1.125rem;
+  }
+
+  .stops {
+    gap: 6px;
+  }
+</style>

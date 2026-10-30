@@ -1,0 +1,65 @@
+---
+import EventCard from '../../components/EventCard.astro';
+import FilterChips from '../../components/FilterChips.astro';
+import MapView from '../../components/MapView.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import PlaceCard from '../../components/PlaceCard.astro';
+import { listEvents, listPlaces } from '../../data';
+import { PLACE_KINDS } from '../../data/labels';
+import type { PlaceKind } from '../../data/types';
+import Base from '../../layouts/Base.astro';
+import { eventMarkers, placeMarkers } from '../../lib/markers';
+
+const param = Astro.url.searchParams.get('kind');
+const kind = param && param in PLACE_KINDS ? (param as PlaceKind) : undefined;
+const eventsOnly = param === 'event';
+
+const places = eventsOnly ? [] : await listPlaces({ kind });
+const events = !param || eventsOnly ? await listEvents({ when: 'month' }) : [];
+const markers = [...placeMarkers(places), ...eventMarkers(events)];
+
+const options = [
+  ...Object.entries(PLACE_KINDS).map(([value, k]) => ({ value, label: k.label })),
+  { value: 'event', label: 'イベント会場' },
+];
+---
+
+<Base title="マップ" description="立川市内の施設、お店、避難所、イベント会場を地図で見る">
+  <PageHeader
+    title="マップ"
+    lead="施設やお店、避難所、30 日以内のイベント会場を地図に表示します。"
+    crumbs={[{ label: 'マップ' }]}
+  />
+  <div class="container section stack" style="--gap: 16px">
+    <FilterChips label="表示" param="kind" options={options} />
+    <div class="layout">
+      <MapView markers={markers} height="560px" label="市内の施設とイベント会場の地図" />
+      <div class="side stack" style="--gap: 10px">
+        <p class="small muted">{markers.length} 件を表示中</p>
+        {events.map((e) => <EventCard event={e} compact />)}
+        {places.map((p) => <PlaceCard place={p} />)}
+        {markers.length === 0 && <p class="empty">表示できる地点がありません</p>}
+      </div>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .layout {
+    display: grid;
+    gap: 16px;
+  }
+
+  @media (min-width: 960px) {
+    .layout {
+      grid-template-columns: 1fr 340px;
+      align-items: start;
+    }
+
+    .side {
+      max-height: 560px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+  }
+</style>

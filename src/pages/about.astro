@@ -1,0 +1,188 @@
+---
+import Badge from '../components/Badge.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { listSources } from '../data';
+import Base from '../layouts/Base.astro';
+import { formatDate, formatDateTime, timeAgo } from '../lib/format';
+
+const sources = await listSources();
+
+const kindLabel = { rss: 'RSS', html: 'ページ巡回', api: 'API', manual: '手入力・投稿' } as const;
+const statusTone = { success: 'green', partial: 'amber', failed: 'danger' } as const;
+const statusLabel = { success: '正常', partial: '一部のみ', failed: '失敗' } as const;
+
+function interval(min: number): string {
+  if (min === 0) return '随時';
+  if (min < 60) return `${min} 分ごと`;
+  if (min < 1440) return `${min / 60} 時間ごと`;
+  return `${Math.round(min / 1440)} 日ごと`;
+}
+---
+
+<Base title="サイトについて" description="このサイトの目的、情報源、更新状況">
+  <PageHeader title="サイトについて" crumbs={[{ label: 'サイトについて' }]} />
+  <div class="container section stack" style="--gap: 36px">
+    <section class="stack" style="--gap: 10px">
+      <h2>このサイトについて</h2>
+      <p>
+        立川市の公式情報、イベント、お店の変化、街の歴史などを集めた、非公式のポータルサイトです。
+        市や各事業者の公式発表を中心に、出典元へのリンクを付けて掲載しています。
+      </p>
+      <p class="muted small">
+        掲載内容は自動で集めたものを含み、実際の内容と異なることがあります。
+        日時や場所などの大切な情報は、必ず出典元で確認してください。
+      </p>
+    </section>
+
+    <section class="stack" style="--gap: 12px" id="sources">
+      <h2>情報源と更新状況</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">情報源</th>
+              <th scope="col">取得方法</th>
+              <th scope="col">間隔</th>
+              <th scope="col">状態</th>
+              <th scope="col">最終取得</th>
+              <th scope="col">規約の確認</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              sources.map((s) => (
+                <tr>
+                  <th scope="row">{s.name}</th>
+                  <td>{kindLabel[s.kind]}</td>
+                  <td>{interval(s.intervalMinutes)}</td>
+                  <td>
+                    <Badge tone={statusTone[s.lastStatus]}>{statusLabel[s.lastStatus]}</Badge>
+                  </td>
+                  <td>
+                    {s.lastSuccessAt ? (
+                      <>
+                        {formatDateTime(s.lastSuccessAt)}
+                        <span class="small muted"> （{timeAgo(s.lastSuccessAt)}）</span>
+                      </>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
+                  <td>{s.termsCheckedOn ? formatDate(s.termsCheckedOn) : '未確認'}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">
+        取得に失敗している情報源は、復旧するまで古い情報が表示されたままになります。
+      </p>
+    </section>
+
+    <section class="stack" style="--gap: 12px" id="submit">
+      <h2>情報提供</h2>
+      <p class="muted">
+        イベントやお店の変化など、お気づきのことがあれば教えてください。
+        内容を確認したうえで掲載します。
+      </p>
+      <form class="card form" onsubmit="return false">
+        <label>
+          <span>種類</span>
+          <select name="kind" disabled>
+            <option>イベント</option>
+            <option>お店の変化</option>
+            <option>その他</option>
+          </select>
+        </label>
+        <label>
+          <span>内容</span>
+          <textarea name="body" rows="5" disabled></textarea>
+        </label>
+        <label>
+          <span>連絡先（任意）</span>
+          <input type="text" name="contact" disabled />
+        </label>
+        <p><button class="btn" type="submit" disabled>送信（準備中）</button></p>
+      </form>
+    </section>
+  </div>
+</Base>
+
+<style>
+  h2 {
+    font-size: 1.25rem;
+    padding-left: 12px;
+    border-left: 5px solid var(--accent);
+  }
+
+  section {
+    scroll-margin-top: 120px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  th,
+  td {
+    padding: 10px 14px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+  }
+
+  thead th {
+    color: var(--muted);
+    font-weight: 600;
+    background: var(--surface-2);
+  }
+
+  tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+
+  .form {
+    display: grid;
+    gap: 14px;
+    max-width: 560px;
+  }
+
+  .form label {
+    display: grid;
+    gap: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .form textarea,
+  .form input,
+  .form select {
+    font: inherit;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-weight: 400;
+  }
+
+  .form select {
+    border-radius: var(--radius-sm);
+  }
+
+  .form :disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+</style>

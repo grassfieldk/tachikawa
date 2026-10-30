@@ -1,0 +1,59 @@
+---
+// 絞り込みの選択肢をリンクで並べる（クエリ文字列を切り替えるだけで、JS は使わない）
+interface Option {
+  value: string;
+  label: string;
+}
+
+interface Props {
+  label: string;
+  param: string;
+  options: Option[];
+  allLabel?: string;
+}
+
+const { label, param, options, allLabel = 'すべて' } = Astro.props;
+const current = Astro.url.searchParams.get(param);
+
+function hrefFor(value: string | null): string {
+  const params = new URLSearchParams(Astro.url.searchParams);
+  if (value === null) params.delete(param);
+  else params.set(param, value);
+  const qs = params.toString();
+  return qs ? `${Astro.url.pathname}?${qs}` : Astro.url.pathname;
+}
+---
+
+<div class="filter">
+  <span class="label small muted">{label}</span>
+  <nav class="chips" aria-label={label}>
+    <a class="chip" href={hrefFor(null)} aria-current={current === null ? 'true' : undefined}>
+      {allLabel}
+    </a>
+    {
+      options.map((o) => (
+        <a
+          class="chip"
+          href={hrefFor(o.value)}
+          aria-current={current === o.value ? 'true' : undefined}
+        >
+          {o.label}
+        </a>
+      ))
+    }
+  </nav>
+</div>
+
+<style>
+  .filter {
+    display: grid;
+    gap: 6px;
+  }
+
+  @media (min-width: 720px) {
+    .filter {
+      grid-template-columns: 72px 1fr;
+      align-items: center;
+    }
+  }
+</style>

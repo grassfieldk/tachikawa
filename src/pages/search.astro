@@ -1,0 +1,70 @@
+---
+import ArticleList from '../components/ArticleList.astro';
+import EventCard from '../components/EventCard.astro';
+import PageHeader from '../components/PageHeader.astro';
+import PlaceCard from '../components/PlaceCard.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { search } from '../data';
+import Base from '../layouts/Base.astro';
+
+const q = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 100);
+const result = await search(q);
+const total = result.articles.length + result.events.length + result.places.length;
+---
+
+<Base title={q ? `「${q}」の検索結果` : '検索'}>
+  <PageHeader title="検索" crumbs={[{ label: '検索' }]} />
+  <div class="container section stack" style="--gap: 24px">
+    <form class="box" action="/search" method="get" role="search">
+      <label class="sr-only" for="page-q">検索ワード</label>
+      <input id="page-q" type="search" name="q" value={q} placeholder="イベント、お店、施設、お知らせ" />
+      <button class="btn" type="submit">検索</button>
+    </form>
+
+    {!q && <p class="empty">検索ワードを入力してください</p>}
+    {q && total === 0 && <p class="empty">「{q}」に一致する情報は見つかりませんでした</p>}
+    {q && total > 0 && <p class="small muted">「{q}」の検索結果 {total} 件</p>}
+
+    {
+      result.events.length > 0 && (
+        <section>
+          <SectionHeading title={`イベント（${result.events.length}）`} />
+          <div class="grid grid-2">
+            {result.events.map((e) => <EventCard event={e} />)}
+          </div>
+        </section>
+      )
+    }
+    {
+      result.articles.length > 0 && (
+        <section>
+          <SectionHeading title={`お知らせ（${result.articles.length}）`} />
+          <ArticleList articles={result.articles} showSummary />
+        </section>
+      )
+    }
+    {
+      result.places.length > 0 && (
+        <section>
+          <SectionHeading title={`スポット（${result.places.length}）`} />
+          <div class="grid grid-3">
+            {result.places.map((p) => <PlaceCard place={p} />)}
+          </div>
+        </section>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .box {
+    display: flex;
+    gap: 8px;
+    max-width: 640px;
+  }
+
+  .box input {
+    flex: 1;
+    min-width: 0;
+  }
+</style>

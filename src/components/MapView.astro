@@ -1,0 +1,176 @@
+---
+import { MAP_CENTER } from '../config';
+import type { LngLat, MapMarker } from '../data/types';
+
+interface Props {
+  markers: MapMarker[];
+  center?: LngLat;
+  zoom?: number;
+  height?: string;
+  label?: string;
+}
+
+const {
+  markers,
+  center = MAP_CENTER,
+  zoom = 14,
+  height = '360px',
+  label = '地図',
+} = Astro.props;
+---
+
+<div
+  class="map-view"
+  style={`height: ${height}`}
+  role="region"
+  aria-label={label}
+  data-center={JSON.stringify(center)}
+  data-zoom={zoom}
+  data-markers={JSON.stringify(markers)}
+>
+</div>
+
+<script>
+  import type { StyleSpecification } from 'maplibre-gl';
+  import 'maplibre-gl/dist/maplibre-gl.css';
+  // Worker の場所は import.meta.url からの相対で決まり、ビルド後は見つからなくなるため、明示的に渡す
+  import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
+
+  const KIND_STYLE: Record<string, { color: string; glyph: string }> = {
+    shop: { color: '#c9791a', glyph: '店' },
+    restaurant: { color: '#c2417a', glyph: '食' },
+    facility: { color: '#2f6fb3', glyph: '施' },
+    shelter: { color: '#b3261e', glyph: '避' },
+    park: { color: '#2d8a4e', glyph: '園' },
+    station: { color: '#6b4fb3', glyph: '駅' },
+    event: { color: '#0f7f7a', glyph: '催' },
+    area: { color: '#4b5a52', glyph: '区' },
+  };
+
+  interface Marker {
+    id: string;
+    lng: number;
+    lat: number;
+    title: string;
+    subtitle: string | null;
+    href: string;
+    kind: string;
+  }
+
+  const style: StyleSpecification = {
+    version: 8,
+    sources: {
+      gsi: {
+        type: 'raster',
+        tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        maxzoom: 18,
+        attribution:
+          '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>',
+      },
+    },
+    layers: [{ id: 'gsi', type: 'raster', source: 'gsi' }],
+  };
+
+  type MapLibre = typeof import('maplibre-gl');
+
+  function popupContent(m: Marker): HTMLElement {
+    const box = document.createElement('div');
+    box.className = 'map-popup';
+    const link = document.createElement('a');
+    link.href = m.href;
+    link.textContent = m.title;
+    box.append(link);
+    if (m.subtitle) {
+      const sub = document.createElement('p');
+      sub.textContent = m.subtitle;
+      box.append(sub);
+    }
+    return box;
+  }
+
+  async function init(el: HTMLElement) {
+    const maplibregl: MapLibre = await import('maplibre-gl');
+    maplibregl.setWorkerUrl(workerUrl);
+    const markers: Marker[] = JSON.parse(el.dataset.markers ?? '[]');
+    const center = JSON.parse(el.dataset.center ?? '[139.4136, 35.6978]') as [number, number];
+    const zoom = Number(el.dataset.zoom ?? 14);
+
+    const map = new maplibregl.Map({ container: el, style, center, zoom, cooperativeGestures: true });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+    const bounds = new maplibregl.LngLatBounds();
+    for (const m of markers) {
+      const pinStyle = KIND_STYLE[m.kind] ?? KIND_STYLE.facility;
+      const pin = document.createElement('button');
+      pin.type = 'button';
+      pin.className = 'map-pin';
+      pin.style.background = pinStyle.color;
+      pin.textContent = pinStyle.glyph;
+      pin.setAttribute('aria-label', m.title);
+      new maplibregl.Marker({ element: pin })
+        .setLngLat([m.lng, m.lat])
+        .setPopup(new maplibregl.Popup({ offset: 18 }).setDOMContent(popupContent(m)))
+        .addTo(map);
+      bounds.extend([m.lng, m.lat]);
+    }
+
+    if (markers.length > 1) {
+      map.fitBounds(bounds, { padding: 48, maxZoom: 16, duration: 0 });
+    } else if (markers.length === 1) {
+      map.setCenter([markers[0].lng, markers[0].lat]);
+    }
+  }
+
+  // 画面に近づいた地図から順に、地図ライブラリを読み込んで描画する
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        observer.unobserve(entry.target);
+        void init(entry.target as HTMLElement);
+      }
+    },
+    { rootMargin: '300px' },
+  );
+  document.querySelectorAll<HTMLElement>('.map-view').forEach((el) => observer.observe(el));
+</script>
+
+<style is:global>
+  .map-view {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  .map-pin {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    color: #fff;
+    font: 700 0.75rem/1 var(--font);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
+    cursor: pointer;
+  }
+
+  .map-popup {
+    font-family: var(--font);
+    color: #1c2620;
+  }
+
+  .map-popup a {
+    font-weight: 700;
+    color: #0e5233;
+  }
+
+  .map-popup p {
+    margin: 2px 0 0;
+    font-size: 0.75rem;
+    color: #5d6a62;
+  }
+</style>

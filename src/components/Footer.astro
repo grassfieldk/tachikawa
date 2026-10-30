@@ -1,0 +1,115 @@
+---
+import { SITE_NAME } from '../config';
+import { lastUpdatedAt } from '../data';
+import { formatDateTime } from '../lib/format';
+
+const updated = await lastUpdatedAt();
+
+const groups = [
+  {
+    title: '最新情報',
+    links: [
+      { href: '/news', label: 'お知らせ' },
+      { href: '/events', label: 'イベント' },
+      { href: '/changes', label: '開店・閉店' },
+    ],
+  },
+  {
+    title: '街を知る',
+    links: [
+      { href: '/map', label: 'マップ' },
+      { href: '/areas', label: '地区ガイド' },
+      { href: '/history', label: '街の歴史' },
+      { href: '/access', label: '交通' },
+      { href: '/stats', label: '統計' },
+    ],
+  },
+  {
+    title: 'このサイトについて',
+    links: [
+      { href: '/life', label: '暮らし・行政' },
+      { href: '/about', label: 'サイトについて' },
+      { href: '/about#sources', label: '情報源と更新状況' },
+    ],
+  },
+];
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="cols">
+      <div class="about">
+        <p class="brand">{SITE_NAME}</p>
+        <p class="small muted">
+          立川市の公式情報、イベント、街の話題を集めた非公式のポータルサイトです。
+          各情報は出典元へのリンクを付けて掲載しています。
+        </p>
+      </div>
+      {
+        groups.map((g) => (
+          <nav aria-label={g.title}>
+            <h2>{g.title}</h2>
+            <ul>
+              {g.links.map((l) => (
+                <li>
+                  <a href={l.href}>{l.label}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))
+      }
+    </div>
+    <p class="small muted copy">
+      {updated && <>データ最終更新: {formatDateTime(updated)} / </>}
+      地図: <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 48px;
+    padding-block: 36px 28px;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+
+  .cols {
+    display: grid;
+    gap: 24px;
+  }
+
+  .brand {
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-size: 0.875rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  li a {
+    display: inline-block;
+    padding: 3px 0;
+    text-decoration: none;
+  }
+
+  li a:hover {
+    text-decoration: underline;
+  }
+
+  .copy {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (min-width: 720px) {
+    .cols {
+      grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    }
+  }
+</style>

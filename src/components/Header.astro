@@ -1,0 +1,183 @@
+---
+import { SITE_NAME } from '../config';
+
+const path = Astro.url.pathname;
+const query = path === '/search' ? (Astro.url.searchParams.get('q') ?? '') : '';
+
+const nav = [
+  { href: '/news', label: 'お知らせ', match: ['/news'] },
+  { href: '/events', label: 'イベント', match: ['/events'] },
+  { href: '/changes', label: '開店・閉店', match: ['/changes'] },
+  { href: '/map', label: 'マップ', match: ['/map', '/places'] },
+  { href: '/town', label: '街を知る', match: ['/town', '/areas', '/history', '/access', '/stats'] },
+  { href: '/life', label: '暮らし・行政', match: ['/life'] },
+];
+
+const isActive = (match: string[]) =>
+  match.some((p) => path === p || path.startsWith(`${p}/`));
+---
+
+<header class="site-header">
+  <a class="skip" href="#main">本文へ移動</a>
+  <div class="container bar">
+    <a class="brand" href="/" aria-label={`${SITE_NAME} トップへ`}>
+      <span class="mark" aria-hidden="true">立</span>
+      <span class="name">{SITE_NAME}</span>
+    </a>
+
+    <nav class="nav" aria-label="メインメニュー">
+      <ul>
+        {
+          nav.map((item) => (
+            <li>
+              <a href={item.href} aria-current={isActive(item.match) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <form class="search" action="/search" method="get" role="search">
+      <label class="sr-only" for="header-q">サイト内を検索</label>
+      <input id="header-q" type="search" name="q" value={query} placeholder="サイト内を検索" />
+    </form>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .skip {
+    position: absolute;
+    left: -9999px;
+    top: 8px;
+    padding: 8px 14px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    z-index: 30;
+  }
+
+  .skip:focus {
+    left: 8px;
+  }
+
+  .bar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'brand search'
+      'nav nav';
+    align-items: center;
+    gap: 4px 12px;
+    padding-block: 10px 0;
+  }
+
+  .brand {
+    grid-area: brand;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .mark {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1.1rem;
+  }
+
+  .name {
+    font-size: 1.0625rem;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .search {
+    grid-area: search;
+  }
+
+  .search input {
+    width: 112px;
+    min-height: 38px;
+    font-size: 0.875rem;
+  }
+
+  .nav {
+    grid-area: nav;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav ul {
+    display: flex;
+    gap: 2px;
+    min-width: max-content;
+  }
+
+  .nav a {
+    display: block;
+    padding: 10px 14px;
+    color: var(--muted);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+  }
+
+  .nav a:hover {
+    color: var(--accent-ink);
+  }
+
+  .nav a[aria-current='page'] {
+    color: var(--accent-ink);
+    border-bottom-color: var(--accent);
+  }
+
+  @media (min-width: 960px) {
+    .bar {
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas: 'brand nav search';
+      gap: 20px;
+      padding-block: 0;
+    }
+
+    .nav ul {
+      justify-content: center;
+    }
+
+    .nav a {
+      padding-block: 18px 15px;
+    }
+
+    .search input {
+      width: 200px;
+    }
+  }
+
+  @media (min-width: 480px) and (max-width: 959px) {
+    .search input {
+      width: 160px;
+    }
+  }
+</style>

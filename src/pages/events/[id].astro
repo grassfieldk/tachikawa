@@ -1,0 +1,142 @@
+---
+import Badge from '../../components/Badge.astro';
+import EventCard from '../../components/EventCard.astro';
+import MapView from '../../components/MapView.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import { areaOf, getEvent, listEvents, sourceOf } from '../../data';
+import { EVENT_CATEGORIES, EVENT_STATUS_LABELS } from '../../data/labels';
+import Base from '../../layouts/Base.astro';
+import { formatWhen } from '../../lib/format';
+import { eventMarkers } from '../../lib/markers';
+
+const id = Number(Astro.params.id);
+const event = Number.isInteger(id) ? await getEvent(id) : null;
+if (!event) return Astro.rewrite('/404');
+
+const cat = EVENT_CATEGORIES[event.category];
+const status = EVENT_STATUS_LABELS[event.status];
+const area = areaOf(event.areaId);
+const source = sourceOf(event.sourceId);
+const isExternal = event.sourceUrl.startsWith('http');
+
+const nearby = (await listEvents({ areaSlug: area?.code })).filter((e) => e.id !== event.id).slice(0, 2);
+---
+
+<Base title={event.title} description={event.description}>
+  <PageHeader
+    title={event.title}
+    crumbs={[{ label: 'イベント', href: '/events' }, { label: event.title }]}
+  />
+  <div class="container section layout">
+    <div class="stack" style="--gap: 20px">
+      <div class="chips">
+        <Badge tone={cat.tone}>{cat.label}</Badge>
+        {status && <Badge tone={status.tone}>{status.label}</Badge>}
+      </div>
+      {
+        event.status !== 'scheduled' && (
+          <p class="notice">
+            このイベントは{status?.label}となっています。最新の情報は主催者の案内をご確認ください。
+          </p>
+        )
+      }
+      <p>{event.description}</p>
+      <dl class="facts card">
+        <dt>日時</dt>
+        <dd>{formatWhen(event.startsAt, event.endsAt, event.allDay)}</dd>
+        <dt>会場</dt>
+        <dd>{event.venueName}</dd>
+        {
+          area && (
+            <>
+              <dt>地区</dt>
+              <dd>
+                <a href={`/areas/${area.code}`}>{area.name}</a>
+              </dd>
+            </>
+          )
+        }
+        {
+          event.feeText && (
+            <>
+              <dt>参加費</dt>
+              <dd>{event.feeText}</dd>
+            </>
+          )
+        }
+        {
+          event.organizer && (
+            <>
+              <dt>主催</dt>
+              <dd>{event.organizer}</dd>
+            </>
+          )
+        }
+        <dt>出典</dt>
+        <dd>{source?.name}</dd>
+      </dl>
+      <p>
+        <a
+          class="btn"
+          href={event.sourceUrl}
+          target={isExternal ? '_blank' : undefined}
+          rel={isExternal ? 'noopener noreferrer' : undefined}
+        >
+          主催者・出典元のページを開く <span aria-hidden="true">↗</span>
+        </a>
+      </p>
+    </div>
+
+    <aside class="stack" style="--gap: 20px">
+      {
+        event.location ? (
+          <MapView
+            markers={eventMarkers([event])}
+            center={event.location}
+            zoom={16}
+            height="300px"
+            label={`${event.venueName}の地図`}
+          />
+        ) : (
+          <p class="empty">会場の位置情報はありません</p>
+        )
+      }
+    </aside>
+  </div>
+
+  {
+    nearby.length > 0 && (
+      <section class="section">
+        <div class="container">
+          <SectionHeading title={`${area?.name ?? '近く'}のほかのイベント`} />
+          <div class="grid grid-2">
+            {nearby.map((e) => <EventCard event={e} />)}
+          </div>
+        </div>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  .layout {
+    display: grid;
+    gap: 24px;
+  }
+
+  @media (min-width: 900px) {
+    .layout {
+      grid-template-columns: 3fr 2fr;
+      align-items: start;
+    }
+  }
+
+  .notice {
+    padding: 12px 16px;
+    background: var(--tone-amber-bg);
+    color: var(--tone-amber-fg);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+  }
+</style>

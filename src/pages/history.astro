@@ -1,0 +1,243 @@
+---
+import PageHeader from '../components/PageHeader.astro';
+import Base from '../layouts/Base.astro';
+
+export const prerender = true;
+
+interface Entry {
+  year: string;
+  title: string;
+  body: string;
+  photo?: string;
+}
+
+interface Era {
+  name: string;
+  entries: Entry[];
+}
+
+// 年号と本文はダミー（公開前に出典と照合する）
+const eras: Era[] = [
+  {
+    name: '近代',
+    entries: [
+      {
+        year: '1889',
+        title: '甲武鉄道の立川駅が開業',
+        body: '鉄道の開通で、周辺の集落にすぎなかった立川が、交通の要所として動き出す。',
+      },
+      {
+        year: '1922',
+        title: '立川飛行場が開設',
+        body: '軍の飛行場ができ、航空機に関わる工場や施設が集まる街へと変わっていく。',
+        photo: '当時の航空写真や古地図',
+      },
+      {
+        year: '1940',
+        title: '市制を施行',
+        body: '立川町が市になり、行政の仕組みが整う。',
+      },
+    ],
+  },
+  {
+    name: '戦後',
+    entries: [
+      {
+        year: '1945',
+        title: '飛行場が米軍に接収される',
+        body: '終戦後、飛行場は米軍の基地となり、基地の街としての時代が始まる。',
+      },
+      {
+        year: '1977',
+        title: '基地が全面返還される',
+        body: '広大な跡地が、のちの公園、官公庁、商業地へと姿を変えていく出発点になった。',
+        photo: '返還当時の写真',
+      },
+      {
+        year: '1983',
+        title: '昭和記念公園が開園',
+        body: '基地跡地の一部が、国営の公園として開園する。',
+        photo: '開園当時の写真',
+      },
+    ],
+  },
+  {
+    name: '現代',
+    entries: [
+      {
+        year: '1998',
+        title: '多摩モノレールが開業',
+        body: '立川を起点に南北方向の移動が便利になり、駅周辺の人の流れが変わる。',
+      },
+      {
+        year: '2000 年代以降',
+        title: '駅周辺の再開発',
+        body: '大型の商業施設や文化施設が相次いでできて、多摩地域の中心的な商業地として存在感を増していく。',
+      },
+    ],
+  },
+];
+---
+
+<Base title="街の歴史" description="年表と写真でたどる、立川の移り変わり">
+  <PageHeader
+    title="街の歴史"
+    lead="鉄道の開通から基地の返還、公園の開園、再開発まで。立川の移り変わりを年表でたどります。"
+    crumbs={[{ label: '街を知る', href: '/town' }, { label: '街の歴史' }]}
+  />
+  <div class="container section stack" style="--gap: 36px">
+    <p class="note small">
+      この年表の本文はダミーです。公開前に、各項目を出典と照合して書き直します。
+    </p>
+
+    {
+      eras.map((era) => (
+        <section aria-labelledby={`era-${era.name}`}>
+          <h2 class="era" id={`era-${era.name}`}>{era.name}</h2>
+          <ol class="timeline">
+            {era.entries.map((e) => (
+              <li>
+                <span class="year">{e.year}</span>
+                <div class="card entry">
+                  <h3>{e.title}</h3>
+                  <p class="muted">{e.body}</p>
+                  {e.photo && <div class="photo small muted">{e.photo}（準備中）</div>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))
+    }
+
+    <section aria-labelledby="compare">
+      <h2 class="era" id="compare">昔の空と今を比べる</h2>
+      <p class="muted small compare-lead">
+        国土地理院が公開している古い空中写真と、現在の地図を並べて、街の変化を見比べられるようにする予定です。
+      </p>
+      <div class="compare">
+        <div class="pane"><span>昔の空中写真（準備中）</span></div>
+        <div class="pane"><span>現在の地図（準備中）</span></div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .note {
+    padding: 10px 14px;
+    background: var(--tone-amber-bg);
+    color: var(--tone-amber-fg);
+    border-radius: var(--radius-sm);
+  }
+
+  .era {
+    font-size: 1.25rem;
+    margin-bottom: 14px;
+    padding-left: 12px;
+    border-left: 5px solid var(--accent);
+  }
+
+  .timeline {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    padding-left: 18px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: var(--line);
+  }
+
+  .timeline li {
+    position: relative;
+    display: grid;
+    gap: 6px;
+  }
+
+  .timeline li::before {
+    content: '';
+    position: absolute;
+    left: -18px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+  }
+
+  .year {
+    font-weight: 800;
+    font-size: 1.125rem;
+    color: var(--accent-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .entry h3 {
+    font-size: 1.0625rem;
+    margin-bottom: 4px;
+  }
+
+  .photo,
+  .pane {
+    display: grid;
+    place-items: center;
+    margin-top: 12px;
+    min-height: 120px;
+    border: 2px dashed var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+  }
+
+  .compare-lead {
+    margin-bottom: 12px;
+  }
+
+  .compare {
+    display: grid;
+    gap: 12px;
+  }
+
+  .pane {
+    margin: 0;
+    min-height: 220px;
+    color: var(--muted);
+  }
+
+  @media (min-width: 720px) {
+    .timeline {
+      padding-left: 0;
+    }
+
+    .timeline::before {
+      left: 143px;
+    }
+
+    .timeline li {
+      grid-template-columns: 130px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .timeline li::before {
+      left: 137px;
+      top: 18px;
+    }
+
+    .year {
+      padding-top: 12px;
+      text-align: right;
+    }
+
+    .compare {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

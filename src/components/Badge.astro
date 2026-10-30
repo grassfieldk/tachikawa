@@ -1,0 +1,11 @@
+---
+import type { Tone } from '../data/labels';
+
+interface Props {
+  tone?: Tone;
+}
+
+const { tone = 'neutral' } = Astro.props;
+---
+
+<span class={`badge tone-${tone}`}><slot /></span>

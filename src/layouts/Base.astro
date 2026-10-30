@@ -1,0 +1,47 @@
+---
+import '../styles/global.css';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { IS_DUMMY_DATA, SITE_NAME, SITE_TAGLINE } from '../config';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = SITE_TAGLINE } = Astro.props;
+const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
+    <title>{fullTitle}</title>
+  </head>
+  <body>
+    {
+      IS_DUMMY_DATA && (
+        <div class="dummy">表示中のデータはすべてダミーです（画面確認用）</div>
+      )
+    }
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style is:global>
+  .dummy {
+    padding: 4px 16px;
+    background: #3a2f12;
+    color: #f6dc9b;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+</style>

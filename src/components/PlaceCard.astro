@@ -1,0 +1,67 @@
+---
+import { areaOf } from '../data';
+import { PLACE_KINDS, PLACE_STATUSES } from '../data/labels';
+import type { Place } from '../data/types';
+import Badge from './Badge.astro';
+
+interface Props {
+  place: Place;
+}
+
+const { place } = Astro.props;
+const kind = PLACE_KINDS[place.kind];
+const status = PLACE_STATUSES[place.status];
+const area = areaOf(place.areaId);
+---
+
+<a class="card place" href={`/places/${place.id}`}>
+  <span class="glyph" style={`--c: ${kind.color}`} aria-hidden="true">{kind.glyph}</span>
+  <div class="body">
+    <div class="meta">
+      <Badge tone={kind.tone}>{kind.label}</Badge>
+      {place.status !== 'open' && <Badge tone={status.tone}>{status.label}</Badge>}
+    </div>
+    <h3>{place.name}</h3>
+    <p class="small muted">{place.category}{area && <> / {area.name}</>}</p>
+  </div>
+</a>
+
+<style>
+  .place {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 12px;
+    align-items: start;
+    color: var(--text);
+    text-decoration: none;
+    padding: 12px 14px;
+    transition: border-color 0.15s;
+  }
+
+  .place:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .glyph {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--c);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
+</style>

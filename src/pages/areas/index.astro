@@ -1,0 +1,76 @@
+---
+import Badge from '../../components/Badge.astro';
+import MapView from '../../components/MapView.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { listAreas } from '../../data';
+import Base from '../../layouts/Base.astro';
+import type { MapMarker } from '../../data/types';
+
+const areas = await listAreas();
+const markers: MapMarker[] = areas.map((a) => ({
+  id: `area-${a.code}`,
+  lng: a.center[0],
+  lat: a.center[1],
+  title: a.name,
+  subtitle: a.features.join('・'),
+  href: `/areas/${a.code}`,
+  kind: 'area',
+}));
+---
+
+<Base title="地区ガイド" description="立川市の町ごとの特徴と、施設・イベント">
+  <PageHeader
+    title="地区ガイド"
+    lead="町ごとの特徴と、その地区にある施設やこれからのイベントを確認できます。"
+    crumbs={[{ label: '街を知る', href: '/town' }, { label: '地区ガイド' }]}
+  />
+  <div class="container section stack" style="--gap: 24px">
+    <MapView markers={markers} height="360px" label="地区の位置" />
+    <div class="grid grid-3">
+      {
+        areas.map((a) => (
+          <a class="card raised area" href={`/areas/${a.code}`}>
+            <h2>{a.name}</h2>
+            <div class="chips tags">
+              {a.features.map((f) => <Badge>{f}</Badge>)}
+            </div>
+            <p class="small muted">{a.summary}</p>
+            <p class="small counts">
+              スポット {a.placeCount} 件 / イベント {a.upcomingEventCount} 件
+            </p>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</Base>
+
+<style>
+  .area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s;
+  }
+
+  .area:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  h2 {
+    font-size: 1.125rem;
+  }
+
+  .tags {
+    gap: 6px;
+  }
+
+  .counts {
+    margin-top: auto;
+    font-weight: 600;
+    color: var(--accent-ink);
+  }
+</style>

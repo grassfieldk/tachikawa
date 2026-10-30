@@ -1,0 +1,284 @@
+---
+import ArticleList from '../components/ArticleList.astro';
+import Badge from '../components/Badge.astro';
+import ChangeList from '../components/ChangeList.astro';
+import EventCard from '../components/EventCard.astro';
+import MapView from '../components/MapView.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { SITE_TAGLINE } from '../config';
+import { lastUpdatedAt, listArticles, listChanges, listEvents, listPlaces, listSources } from '../data';
+import Base from '../layouts/Base.astro';
+import { formatLongDate, timeAgo } from '../lib/format';
+import { eventMarkers, placeMarkers } from '../lib/markers';
+
+const now = new Date();
+const [todayEvents, weekEvents, articles, changes, safety, places, sources, updated] =
+  await Promise.all([
+    listEvents({ when: 'today' }),
+    listEvents({ when: 'week', limit: 8 }),
+    listArticles({ limit: 7 }),
+    listChanges({ limit: 5 }),
+    listArticles({ category: 'safety', limit: 3 }),
+    listPlaces(),
+    listSources(),
+    lastUpdatedAt(),
+  ]);
+
+const alerts = safety.filter((a) => now.getTime() - a.publishedAt.getTime() < 48 * 3600 * 1000);
+const featured = weekEvents.slice(0, 4);
+
+const markers = [
+  ...eventMarkers(weekEvents),
+  ...placeMarkers(places.filter((p) => ['station', 'facility'].includes(p.kind))),
+];
+
+const quick = [
+  { href: '/events?when=today', label: '今日のイベント' },
+  { href: '/events?when=weekend', label: '今週末のイベント' },
+  { href: '/changes', label: '開店・閉店' },
+  { href: '/life#waste', label: 'ごみ・分別' },
+  { href: '/map?kind=shelter', label: '避難所マップ' },
+];
+
+const town = [
+  { href: '/areas', title: '地区ガイド', text: '町ごとの雰囲気と、施設・イベントを見る' },
+  { href: '/history', title: '街の歴史', text: '年表と写真でたどる、立川の移り変わり' },
+  { href: '/access', title: '交通', text: '鉄道、モノレール、バスのまとめ' },
+  { href: '/stats', title: '統計', text: '人口や世帯などの数字で見る立川' },
+];
+
+const statusTone = { success: 'green', partial: 'amber', failed: 'danger' } as const;
+const statusLabel = { success: '正常', partial: '一部のみ', failed: '失敗' } as const;
+---
+
+<Base>
+  <section class="hero">
+    <div class="container">
+      <p class="today">{formatLongDate(now)}</p>
+      <h1>{SITE_TAGLINE}</h1>
+      <form class="hero-search" action="/search" method="get" role="search">
+        <label class="sr-only" for="hero-q">サイト内を検索</label>
+        <input id="hero-q" type="search" name="q" placeholder="イベント、お店、施設、お知らせを検索" />
+        <button class="btn" type="submit">検索</button>
+      </form>
+      <nav class="chips quick" aria-label="よく見られる情報">
+        {quick.map((q) => <a class="chip" href={q.href}>{q.label}</a>)}
+      </nav>
+    </div>
+  </section>
+
+  {
+    alerts.length > 0 && (
+      <div class="container">
+        <section class="alert" aria-label="注意情報">
+          <Badge tone="danger">注意情報</Badge>
+          <ul>
+            {alerts.map((a) => (
+              <li>
+                <a href={a.sourceUrl}>{a.title}</a>
+                <span class="small muted">{timeAgo(a.publishedAt)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    )
+  }
+
+  <section class="section">
+    <div class="container">
+      <SectionHeading
+        title="これからのイベント"
+        href="/events"
+        linkLabel="イベント一覧"
+      />
+      <p class="small muted count">
+        今日は {todayEvents.length} 件、今後 7 日間は {weekEvents.length} 件のイベントがあります
+      </p>
+      {
+        featured.length > 0 ? (
+          <div class="grid grid-2">
+            {featured.map((e) => <EventCard event={e} />)}
+          </div>
+        ) : (
+          <p class="empty">今後 7 日間に予定されているイベントはありません</p>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container two">
+      <div>
+        <SectionHeading title="新着のお知らせ" href="/news" />
+        <ArticleList articles={articles} />
+      </div>
+      <div>
+        <SectionHeading title="開店・閉店" href="/changes" />
+        <ChangeList changes={changes} />
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <SectionHeading title="マップ" href="/map" linkLabel="マップを開く" />
+      <MapView markers={markers} height="380px" label="イベント会場と主要施設の地図" />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <SectionHeading title="街を知る" href="/town" linkLabel="一覧" />
+      <div class="grid grid-4">
+        {
+          town.map((t) => (
+            <a class="card town" href={t.href}>
+              <h3>{t.title}</h3>
+              <p class="small muted">{t.text}</p>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <SectionHeading title="情報の更新状況" href="/about#sources" linkLabel="情報源の一覧" />
+      <div class="card status">
+        <p class="small muted">
+          {updated && <>最終更新 {timeAgo(updated)}。</>}
+          各情報は次の情報源から定期的に取得しています。
+        </p>
+        <ul class="sources">
+          {
+            sources.map((s) => (
+              <li>
+                <Badge tone={statusTone[s.lastStatus]}>{statusLabel[s.lastStatus]}</Badge>
+                <span class="small">{s.name}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding-block: 40px 28px;
+    background:
+      radial-gradient(900px 300px at 85% -20%, color-mix(in srgb, var(--accent) 22%, transparent), transparent),
+      linear-gradient(180deg, var(--accent-weak), transparent);
+  }
+
+  .today {
+    font-weight: 700;
+    color: var(--accent-ink);
+    margin-bottom: 4px;
+  }
+
+  h1 {
+    font-size: clamp(1.5rem, 4.5vw, 2.25rem);
+    letter-spacing: 0.01em;
+    max-width: 22em;
+  }
+
+  .hero-search {
+    display: flex;
+    gap: 8px;
+    max-width: 640px;
+    margin-top: 20px;
+  }
+
+  .hero-search input {
+    flex: 1;
+    min-width: 0;
+    min-height: 52px;
+    padding-inline: 20px;
+    font-size: 1rem;
+    box-shadow: var(--shadow);
+  }
+
+  .hero-search .btn {
+    min-height: 52px;
+    padding-inline: 26px;
+  }
+
+  .quick {
+    margin-top: 16px;
+  }
+
+  .alert {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 4px;
+    padding: 12px 16px;
+    background: var(--tone-danger-bg);
+    border: 1px solid color-mix(in srgb, var(--tone-danger-fg) 25%, transparent);
+    border-radius: var(--radius);
+  }
+
+  .alert li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+  }
+
+  .alert a {
+    color: var(--tone-danger-fg);
+    font-weight: 600;
+  }
+
+  .count {
+    margin: -6px 0 14px;
+  }
+
+  .two {
+    display: grid;
+    gap: 28px;
+  }
+
+  @media (min-width: 900px) {
+    .two {
+      grid-template-columns: 3fr 2fr;
+    }
+  }
+
+  .town {
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s;
+  }
+
+  .town:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .town h3 {
+    font-size: 1.0625rem;
+    margin-bottom: 4px;
+  }
+
+  .sources {
+    display: grid;
+    gap: 8px 20px;
+    margin-top: 12px;
+  }
+
+  .sources li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  @media (min-width: 720px) {
+    .sources {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

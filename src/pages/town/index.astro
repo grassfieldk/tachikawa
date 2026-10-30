@@ -1,0 +1,78 @@
+---
+import PageHeader from '../../components/PageHeader.astro';
+import Base from '../../layouts/Base.astro';
+
+export const prerender = true;
+
+const items = [
+  {
+    href: '/areas',
+    title: '地区ガイド',
+    text: '町ごとの雰囲気や特徴を紹介し、その地区の施設とイベントをまとめて見られます。',
+  },
+  {
+    href: '/history',
+    title: '街の歴史',
+    text: '鉄道の開通から基地の返還、公園の開園まで。年表と写真で立川の移り変わりをたどります。',
+  },
+  {
+    href: '/access',
+    title: '交通',
+    text: '鉄道、モノレール、バス、主要な道路をまとめています。',
+  },
+  {
+    href: '/stats',
+    title: '統計',
+    text: '人口や世帯数、年齢の構成など、数字で見る立川。',
+  },
+];
+---
+
+<Base title="街を知る" description="立川の地区、歴史、交通、統計">
+  <PageHeader
+    title="街を知る"
+    lead="立川の成り立ちや構造を、地区・歴史・交通・統計の 4 つの切り口で紹介します。"
+    crumbs={[{ label: '街を知る' }]}
+  />
+  <div class="container section">
+    <div class="grid grid-2">
+      {
+        items.map((i) => (
+          <a class="card raised item" href={i.href}>
+            <h2>{i.title}</h2>
+            <p class="muted">{i.text}</p>
+            <span class="more">見る <span aria-hidden="true">→</span></span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</Base>
+
+<style>
+  .item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 22px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s;
+  }
+
+  .item:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  .more {
+    margin-top: auto;
+    padding-top: 8px;
+    font-weight: 700;
+    color: var(--accent-ink);
+  }
+</style>

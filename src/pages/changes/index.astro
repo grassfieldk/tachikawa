@@ -1,0 +1,63 @@
+---
+import ChangeList from '../../components/ChangeList.astro';
+import FilterChips from '../../components/FilterChips.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { listChanges } from '../../data';
+import { CHANGE_TYPES } from '../../data/labels';
+import type { PlaceChangeType } from '../../data/types';
+import Base from '../../layouts/Base.astro';
+
+const param = Astro.url.searchParams.get('type');
+const type = param && param in CHANGE_TYPES ? (param as PlaceChangeType) : undefined;
+const changes = await listChanges({ type });
+
+const options = Object.entries(CHANGE_TYPES).map(([value, c]) => ({ value, label: c.label }));
+---
+
+<Base title="開店・閉店" description="立川市内のお店の開店・閉店・移転・改装の情報">
+  <PageHeader
+    title="開店・閉店"
+    lead="市内のお店の開店、閉店、移転、改装の情報です。確認できたものから順に掲載しています。"
+    crumbs={[{ label: '開店・閉店' }]}
+  />
+  <div class="container section layout">
+    <div class="stack" style="--gap: 16px">
+      <FilterChips label="種類" param="type" options={options} />
+      <p class="small muted">{changes.length} 件</p>
+      {
+        changes.length > 0 ? (
+          <ChangeList changes={changes} showNote />
+        ) : (
+          <p class="empty">該当する情報はありません</p>
+        )
+      }
+    </div>
+    <aside class="card stack" style="--gap: 8px">
+      <h2>掲載について</h2>
+      <p class="small muted">
+        開店・閉店の情報は、公式発表や報道、法人登録の変更などを手がかりに集めています。
+        内容は確認できたものだけを載せるため、実際の変更より遅れることがあります。
+      </p>
+      <p class="small muted">お店の変化を見つけたら、情報提供をお願いします。</p>
+      <p><a class="btn ghost" href="/about#submit">情報を提供する</a></p>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .layout {
+    display: grid;
+    gap: 24px;
+  }
+
+  @media (min-width: 900px) {
+    .layout {
+      grid-template-columns: 2fr 1fr;
+      align-items: start;
+    }
+  }
+
+  h2 {
+    font-size: 1.0625rem;
+  }
+</style>

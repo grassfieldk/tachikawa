@@ -1,0 +1,72 @@
+---
+import Badge from '../../components/Badge.astro';
+import EventCard from '../../components/EventCard.astro';
+import MapView from '../../components/MapView.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import PlaceCard from '../../components/PlaceCard.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import { getArea, listEvents, listPlaces } from '../../data';
+import Base from '../../layouts/Base.astro';
+import { eventMarkers, placeMarkers } from '../../lib/markers';
+
+const slug = Astro.params.slug ?? '';
+const area = await getArea(slug);
+if (!area) return Astro.rewrite('/404');
+
+const [events, places] = await Promise.all([
+  listEvents({ areaSlug: area.code }),
+  listPlaces({ areaSlug: area.code }),
+]);
+const markers = [...placeMarkers(places), ...eventMarkers(events)];
+---
+
+<Base title={area.name} description={area.summary}>
+  <PageHeader
+    title={area.name}
+    lead={area.summary}
+    crumbs={[
+      { label: '街を知る', href: '/town' },
+      { label: '地区ガイド', href: '/areas' },
+      { label: area.name },
+    ]}
+  />
+  <div class="container section stack" style="--gap: 28px">
+    <div class="chips">
+      {area.features.map((f) => <Badge tone="green">{f}</Badge>)}
+    </div>
+
+    <MapView
+      markers={markers}
+      center={area.center}
+      zoom={15}
+      height="340px"
+      label={`${area.name}の地図`}
+    />
+
+    <section>
+      <SectionHeading title={`${area.name}のこれからのイベント`} href={`/events?area=${area.code}`} />
+      {
+        events.length > 0 ? (
+          <div class="grid grid-2">
+            {events.map((e) => <EventCard event={e} />)}
+          </div>
+        ) : (
+          <p class="empty">予定されているイベントはありません</p>
+        )
+      }
+    </section>
+
+    <section>
+      <SectionHeading title={`${area.name}のスポット`} />
+      {
+        places.length > 0 ? (
+          <div class="grid grid-3">
+            {places.map((p) => <PlaceCard place={p} />)}
+          </div>
+        ) : (
+          <p class="empty">登録されているスポットはありません</p>
+        )
+      }
+    </section>
+  </div>
+</Base>

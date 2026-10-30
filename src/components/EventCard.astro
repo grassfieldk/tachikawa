@@ -1,0 +1,110 @@
+---
+import { areaOf } from '../data';
+import { EVENT_CATEGORIES, EVENT_STATUS_LABELS } from '../data/labels';
+import type { EventItem } from '../data/types';
+import { dayOfMonth, formatWhen, monthOf, weekday } from '../lib/format';
+import Badge from './Badge.astro';
+
+interface Props {
+  event: EventItem;
+  compact?: boolean;
+}
+
+const { event, compact = false } = Astro.props;
+const cat = EVENT_CATEGORIES[event.category];
+const status = EVENT_STATUS_LABELS[event.status];
+const area = areaOf(event.areaId);
+const inactive = event.status !== 'scheduled';
+const now = Date.now();
+const ongoing =
+  !inactive && event.startsAt.getTime() <= now && (event.endsAt ?? event.startsAt).getTime() >= now;
+---
+
+<a class:list={['card event', { inactive, compact }]} href={`/events/${event.id}`}>
+  <div class="date" aria-hidden="true">
+    <span class="m">{monthOf(event.startsAt)}月</span>
+    <span class="d">{dayOfMonth(event.startsAt)}</span>
+    <span class="w">{weekday(event.startsAt)}</span>
+  </div>
+  <div class="body">
+    <div class="meta">
+      <Badge tone={cat.tone}>{cat.label}</Badge>
+      {status && <Badge tone={status.tone}>{status.label}</Badge>}
+      {ongoing && <Badge tone="green">開催中</Badge>}
+    </div>
+    <h3>{event.title}</h3>
+    <p class="small muted">{formatWhen(event.startsAt, event.endsAt, event.allDay)}</p>
+    <p class="small muted">
+      {event.venueName}{area && <> / {area.name}</>}
+    </p>
+    {!compact && event.feeText && <p class="small fee">{event.feeText}</p>}
+  </div>
+</a>
+
+<style>
+  .event {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 14px;
+    color: var(--text);
+    text-decoration: none;
+    height: 100%;
+    transition: border-color 0.15s;
+  }
+
+  .event:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .event.inactive h3 {
+    text-decoration: line-through;
+    text-decoration-color: var(--muted);
+  }
+
+  .date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: start;
+    padding: 6px 0;
+    background: var(--accent-weak);
+    border-radius: 10px;
+    line-height: 1.2;
+    color: var(--accent-ink);
+  }
+
+  .m,
+  .w {
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .d {
+    font-size: 1.5rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  h3 {
+    font-size: 1rem;
+    margin-bottom: 2px;
+  }
+
+  .fee {
+    margin-top: 2px;
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  .compact {
+    padding: 12px 14px;
+  }
+</style>

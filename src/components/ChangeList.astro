@@ -1,0 +1,90 @@
+---
+import { areaOf } from '../data';
+import { CHANGE_TYPES } from '../data/labels';
+import type { PlaceChange } from '../data/types';
+import { formatMonthDayWeekday } from '../lib/format';
+import Badge from './Badge.astro';
+
+interface Props {
+  changes: PlaceChange[];
+  showNote?: boolean;
+}
+
+const { changes, showNote = false } = Astro.props;
+const now = Date.now();
+
+function whenLabel(c: PlaceChange): string {
+  if (!c.effectiveOn) return '時期未定';
+  const future = c.effectiveOn.getTime() > now;
+  const verb = { open: '開店', close: '閉店', relocate: '移転', renovate: '改装' }[c.changeType];
+  return `${formatMonthDayWeekday(c.effectiveOn)} ${future ? `${verb}予定` : `${verb}`}`;
+}
+---
+
+<ul class="list">
+  {
+    changes.map((c) => {
+      const type = CHANGE_TYPES[c.changeType];
+      const area = areaOf(c.areaId);
+      return (
+        <li class="row">
+          <Badge tone={type.tone}>{type.label}</Badge>
+          <div class="body">
+            {c.placeId ? (
+              <a class="name" href={`/places/${c.placeId}`}>
+                {c.placeName}
+              </a>
+            ) : (
+              <span class="name">{c.placeName}</span>
+            )}
+            <p class="small muted">
+              {whenLabel(c)}
+              {area && <> / {area.name}</>}
+            </p>
+            {showNote && c.note && <p class="small">{c.note}</p>}
+          </div>
+        </li>
+      );
+    })
+  }
+</ul>
+
+<style>
+  .list {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 12px;
+    align-items: start;
+    padding: 12px 16px;
+  }
+
+  .row + .row {
+    border-top: 1px solid var(--line);
+  }
+
+  .row :global(.badge) {
+    justify-content: center;
+    margin-top: 2px;
+  }
+
+  .name {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  a.name {
+    text-decoration: none;
+  }
+
+  a.name:hover {
+    color: var(--accent-ink);
+    text-decoration: underline;
+  }
+</style>
