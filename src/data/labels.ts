@@ -61,6 +61,7 @@ export const SOURCE_KINDS: Record<SourceKind, string> = {
   rss: 'RSS',
   html: 'ページ巡回',
   api: 'API',
+  file: 'ファイル',
   manual: '手入力・投稿',
 };
 

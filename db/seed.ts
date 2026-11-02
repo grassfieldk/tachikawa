@@ -11,7 +11,6 @@ const dateOnly = (d: Date | null) => (d === null ? null : toDateOnly(d));
 
 // 種別ごとの取得元（ダミーの情報源の slug）
 const PLACE_SOURCE: Record<string, string> = {
-  shelter: 'ksj',
   facility: 'ksj',
   park: 'ksj',
   station: 'osm',

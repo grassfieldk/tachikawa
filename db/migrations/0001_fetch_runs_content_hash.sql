@@ -1,0 +1,1 @@
+ALTER TABLE "fetch_runs" ADD COLUMN "content_hash" text;

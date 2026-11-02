@@ -28,7 +28,7 @@ sources（収集元）
 | id | 主キー |
 | slug | 識別名（一意） |
 | name | 表示名 |
-| kind | rss、html、api、manual のいずれか |
+| kind | rss、html、api、file、manual のいずれか |
 | url | 取得先の基準 URL（認証付き URL は置かない） |
 | enabled | 収集するか |
 | interval_minutes | 収集間隔 |
@@ -45,6 +45,7 @@ fetch_runs（収集ログ）
 | status | success、partial、failed のいずれか。実行中は NULL |
 | items_seen、items_changed | 見つけた件数と、新規または変更があった件数 |
 | error | 失敗時のメッセージ |
+| content_hash | 取得した内容のハッシュ。内容が前回と同じなら収集しない情報源で使う |
 
 最終収集日時の表示や、更新停止の検知に使う。
 

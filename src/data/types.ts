@@ -3,7 +3,7 @@
 // 経度, 緯度
 export type LngLat = [number, number];
 
-export type SourceKind = 'rss' | 'html' | 'api' | 'manual';
+export type SourceKind = 'rss' | 'html' | 'api' | 'file' | 'manual';
 export type FetchStatus = 'success' | 'partial' | 'failed';
 
 export interface Source {

@@ -140,7 +140,7 @@ export function PlaceDetailView({
           <Facts
             rows={compact<[string, ReactNode]>([
               ['分類', place.category],
-              ['状態', PLACE_STATUSES[place.status]],
+              place.kind !== 'shelter' && ['状態', PLACE_STATUSES[place.status]],
               !!place.address && ['住所', place.address],
               !!place.area && ['地区', <Anchor href={`/areas/${place.area.code}`}>{place.area.name}</Anchor>],
               !!place.openedOn && ['開店', formatDate(place.openedOn)],
@@ -148,6 +148,11 @@ export function PlaceDetailView({
               ...Object.entries(place.attributes).map(([k, v]): [string, ReactNode] => [k, v]),
             ])}
           />
+          {place.kind === 'shelter' && (
+            <Text size="sm" c="dimmed" mb="md">
+              出典: 国土地理院 指定緊急避難場所・指定避難所データ。最新でない場合があるため、詳しくは立川市に確認してください。指定緊急避難場所は災害の種類ごとに指定されています。
+            </Text>
+          )}
           {place.websiteUrl && (
             <Button component="a" href={place.websiteUrl} variant="default" target="_blank" rel="noopener noreferrer">
               公式サイト

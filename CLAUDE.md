@@ -41,4 +41,4 @@ DB の接続先は `.env` の `DATABASE_URL_WEB`（サイト用、読み取り�
 
 画面の文言は事実だけを簡潔に書き、キャッチコピーのような表現は使わない。
 
-収集処理は `collector/` にあり、情報源ごとの定義を `collector/sources/` に置いて `collector/run.ts` の一覧に加える。お知らせは立川市公式サイトの RSS から収集し、それ以外は `db/dummy.ts` のダミーデータ。画面は `src/data/index.ts` の関数だけを通して DB を読む。
+収集処理は `collector/` にあり、情報源ごとの定義を `collector/sources/` に置いて `collector/run.ts` の一覧に加える。お知らせは立川市公式サイトの RSS から、避難所は国土地理院の CSV から収集し、それ以外は `db/dummy.ts` のダミーデータ。避難所の CSV は手動でダウンロードし、指定緊急避難場所を `data/shelters/emergency.csv`、指定避難所を `data/shelters/shelter.csv` に置く。内容が前回と変わらなければ収集しない。画面は `src/data/index.ts` の関数だけを通して DB を読む。

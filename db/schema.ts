@@ -89,6 +89,8 @@ export const fetchRuns = pgTable(
     itemsSeen: integer().notNull().default(0),
     itemsChanged: integer().notNull().default(0),
     error: text(),
+    // 取得した内容のハッシュ。内容が前回と同じなら収集しない情報源で使う
+    contentHash: text(),
     ...timestamps,
   },
   (t) => [index().on(t.sourceId, t.finishedAt)],
