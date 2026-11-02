@@ -8,10 +8,10 @@ import PageTitle from '../components/PageTitle';
 import PlaceCard from '../components/PlaceCard';
 import { Page } from '../components/Providers';
 import SectionTitle from '../components/SectionTitle';
-import type { AreaSummary, LngLat, MapMarker } from '../data/types';
+import type { AreaSummary, LngLat, MapMarker, Place } from '../data/types';
 import { EVENT_CATEGORIES, EVENT_STATUS_LABELS, PLACE_KINDS, PLACE_STATUSES } from '../data/labels';
 import { formatDate, formatWhen } from '../lib/format';
-import type { ChangeView, EventView, PlaceView } from '../lib/views';
+import type { ChangeView, EventView } from '../lib/views';
 
 function Facts({ rows }: { rows: [string, ReactNode][] }) {
   return (
@@ -121,10 +121,10 @@ export function PlaceDetailView({
   changes,
   nearby,
 }: {
-  place: PlaceView;
+  place: Place;
   markers: MapMarker[];
   changes: ChangeView[];
-  nearby: PlaceView[];
+  nearby: Place[];
 }) {
   return (
     <Page>
@@ -226,7 +226,7 @@ export function AreaDetailView({
 }: {
   area: { code: string; name: string; summary: string; features: string[]; center: LngLat };
   events: EventView[];
-  places: PlaceView[];
+  places: Place[];
   markers: MapMarker[];
 }) {
   return (

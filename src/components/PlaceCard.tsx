@@ -1,8 +1,8 @@
 import { Anchor, Badge, Card, Group, Text } from '@mantine/core';
 import { PLACE_KINDS, PLACE_STATUSES } from '../data/labels';
-import type { PlaceView } from '../lib/views';
+import type { Place } from '../data/types';
 
-export default function PlaceCard({ place }: { place: PlaceView }) {
+export default function PlaceCard({ place }: { place: Place }) {
   return (
     <Card withBorder padding="md">
       <Group gap="xs" mb="xs">

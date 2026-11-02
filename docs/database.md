@@ -42,7 +42,7 @@ fetch_runs（収集ログ）
 | id | 主キー |
 | source_id | sources への参照 |
 | started_at、finished_at | 実行の開始と終了 |
-| status | success、partial、failed のいずれか |
+| status | success、partial、failed のいずれか。実行中は NULL |
 | items_seen、items_changed | 見つけた件数と、新規または変更があった件数 |
 | error | 失敗時のメッセージ |
 
@@ -69,6 +69,9 @@ areas
 | name | 地区名 |
 | kind | 町丁目、地区などの種別 |
 | parent_id | 上位の地区への参照 |
+| summary | 概要文（手書き） |
+| features | 特徴を表す短い語の配列 |
+| center | 地図の中心にする地点、`geometry(Point, 4326)` |
 | geom | `geometry(MultiPolygon, 4326)` |
 
 境界データは e-Stat の公開データを使う。
@@ -138,7 +141,9 @@ place_changes（開店・閉店の情報、段階 3）
 | change_type | open、close、relocate、renovate のいずれか |
 | effective_on | 実施日（予定を含む）、NULL 可 |
 | source_url | 情報源の URL |
-| published_at | 情報の公開日 |
+| area_id | areas への参照、NULL 可 |
+| published_at | 情報の公開日時 |
+| note | 補足 |
 | confirmed | 人が確認したか。確認前は公開しない |
 
 submissions（情報提供、段階 3、非公開）

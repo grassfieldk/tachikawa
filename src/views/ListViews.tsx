@@ -10,10 +10,10 @@ import PageTitle from '../components/PageTitle';
 import PlaceCard from '../components/PlaceCard';
 import { Page } from '../components/Providers';
 import SearchForm from '../components/SearchForm';
-import type { MapMarker } from '../data/types';
+import type { MapMarker, Place } from '../data/types';
 import { PLACE_KINDS } from '../data/labels';
 import { formatWhen } from '../lib/format';
-import type { ArticleView, ChangeView, EventView, PlaceView } from '../lib/views';
+import type { ArticleView, ChangeView, EventView } from '../lib/views';
 
 type Fields = Parameters<typeof FilterBar>[0]['fields'];
 
@@ -132,7 +132,7 @@ export function MapPageView({
   search,
 }: {
   markers: MapMarker[];
-  places: PlaceView[];
+  places: Place[];
   events: EventView[];
   fields: Fields;
   search: string;
@@ -199,7 +199,7 @@ export function SearchView({
   q: string;
   articles: ArticleView[];
   events: EventView[];
-  places: PlaceView[];
+  places: Place[];
 }) {
   const total = articles.length + events.length + places.length;
   return (

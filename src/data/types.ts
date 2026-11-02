@@ -13,7 +13,8 @@ export interface Source {
   kind: SourceKind;
   url: string | null;
   intervalMinutes: number;
-  lastStatus: FetchStatus;
+  // 収集を一度も終えていなければ null
+  lastStatus: FetchStatus | null;
   lastSuccessAt: Date | null;
   termsCheckedOn: Date | null;
 }
@@ -27,6 +28,11 @@ export interface Area {
   center: LngLat;
 }
 
+export interface AreaRef {
+  code: string;
+  name: string;
+}
+
 export interface AreaSummary extends Area {
   placeCount: number;
   upcomingEventCount: number;
@@ -37,6 +43,7 @@ export type ArticleCategory = 'notice' | 'safety' | 'life' | 'welfare' | 'kids' 
 export interface Article {
   id: number;
   sourceId: number;
+  sourceName: string;
   sourceUrl: string;
   title: string;
   summary: string | null;
@@ -50,6 +57,7 @@ export type EventStatus = 'scheduled' | 'cancelled' | 'postponed';
 export interface EventItem {
   id: number;
   sourceId: number;
+  sourceName: string;
   sourceUrl: string;
   title: string;
   description: string;
@@ -60,6 +68,7 @@ export interface EventItem {
   address: string | null;
   location: LngLat | null;
   areaId: number | null;
+  area: AreaRef | null;
   category: EventCategory;
   status: EventStatus;
   feeText: string | null;
@@ -77,6 +86,7 @@ export interface Place {
   address: string | null;
   location: LngLat | null;
   areaId: number | null;
+  area: AreaRef | null;
   status: PlaceStatus;
   openedOn: Date | null;
   closedOn: Date | null;
@@ -95,6 +105,7 @@ export interface PlaceChange {
   changeType: PlaceChangeType;
   effectiveOn: Date | null;
   areaId: number | null;
+  area: AreaRef | null;
   sourceUrl: string;
   publishedAt: Date;
   note: string | null;

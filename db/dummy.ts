@@ -1,6 +1,19 @@
-// 画面確認用のダミーデータ。日時は起動した日を基準に作る
-import { jstDate, nextWeekday } from '../lib/dates';
-import type { Area, Article, EventItem, Place, PlaceChange, Source } from './types';
+// 画面確認用のダミーデータ。日時は投入した日を基準に作る
+import { jstDate, nextWeekday } from '../src/lib/dates';
+import type {
+  Area,
+  Article as ArticleItem,
+  EventItem as EventFull,
+  Place as PlaceFull,
+  PlaceChange as PlaceChangeFull,
+  Source,
+} from '../src/data/types';
+
+// 地区名と情報源名は DB から読むときに結合するため、ここでは持たない
+type Article = Omit<ArticleItem, 'sourceName'>;
+type EventItem = Omit<EventFull, 'area' | 'sourceName'>;
+type Place = Omit<PlaceFull, 'area'>;
+type PlaceChange = Omit<PlaceChangeFull, 'area'>;
 
 const minutesAgo = (min: number) => new Date(Date.now() - min * 60 * 1000);
 

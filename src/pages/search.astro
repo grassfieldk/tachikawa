@@ -1,7 +1,7 @@
 ---
 import { search } from '../data';
 import Base from '../layouts/Base.astro';
-import { articleView, eventView, placeView } from '../lib/views';
+import { articleView, eventView } from '../lib/views';
 import { SearchView } from '../views/ListViews';
 
 const q = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 100);
@@ -15,6 +15,6 @@ const now = new Date();
     q={q}
     articles={result.articles.map((a) => articleView(a, now))}
     events={result.events.map((e) => eventView(e, now))}
-    places={result.places.map(placeView)}
+    places={result.places}
   />
 </Base>

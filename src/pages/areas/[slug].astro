@@ -2,7 +2,7 @@
 import { getArea, listEvents, listPlaces } from '../../data';
 import Base from '../../layouts/Base.astro';
 import { eventMarkers, placeMarkers } from '../../lib/markers';
-import { eventView, placeView } from '../../lib/views';
+import { eventView } from '../../lib/views';
 import { AreaDetailView } from '../../views/DetailViews';
 
 const area = await getArea(Astro.params.slug ?? '');
@@ -20,7 +20,7 @@ const now = new Date();
     client:load
     area={area}
     events={events.map((e) => eventView(e, now))}
-    places={places.map(placeView)}
+    places={places}
     markers={[...placeMarkers(places), ...eventMarkers(events)]}
   />
 </Base>

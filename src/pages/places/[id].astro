@@ -1,9 +1,9 @@
 ---
-import { areaOf, getPlace, listChanges, listPlaces } from '../../data';
+import { getPlace, listChanges, listPlaces } from '../../data';
 import { PLACE_KINDS } from '../../data/labels';
 import Base from '../../layouts/Base.astro';
 import { placeMarkers } from '../../lib/markers';
-import { changeView, placeView } from '../../lib/views';
+import { changeView } from '../../lib/views';
 import { PlaceDetailView } from '../../views/DetailViews';
 
 const id = Number(Astro.params.id);
@@ -11,17 +11,16 @@ const place = Number.isInteger(id) ? await getPlace(id) : null;
 if (!place) return Astro.rewrite('/404');
 
 const now = new Date();
-const area = areaOf(place.areaId);
 const changes = (await listChanges()).filter((c) => c.placeId === place.id);
-const nearby = (await listPlaces({ areaSlug: area?.code })).filter((p) => p.id !== place.id).slice(0, 6);
+const nearby = (await listPlaces({ areaSlug: place.area?.code })).filter((p) => p.id !== place.id).slice(0, 6);
 ---
 
 <Base title={place.name} description={`${place.name}（${PLACE_KINDS[place.kind]}）`}>
   <PlaceDetailView
     client:load
-    place={placeView(place)}
+    place={place}
     markers={placeMarkers([place])}
     changes={changes.map((c) => changeView(c, now))}
-    nearby={nearby.map(placeView)}
+    nearby={nearby}
   />
 </Base>

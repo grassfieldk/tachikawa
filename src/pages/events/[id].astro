@@ -1,5 +1,5 @@
 ---
-import { areaOf, getEvent, listEvents } from '../../data';
+import { getEvent, listEvents } from '../../data';
 import Base from '../../layouts/Base.astro';
 import { eventMarkers } from '../../lib/markers';
 import { eventView } from '../../lib/views';
@@ -10,8 +10,7 @@ const event = Number.isInteger(id) ? await getEvent(id) : null;
 if (!event) return Astro.rewrite('/404');
 
 const now = new Date();
-const area = areaOf(event.areaId);
-const nearby = (await listEvents({ areaSlug: area?.code })).filter((e) => e.id !== event.id).slice(0, 5);
+const nearby = (await listEvents({ areaSlug: event.area?.code })).filter((e) => e.id !== event.id).slice(0, 5);
 ---
 
 <Base title={event.title} description={event.description}>

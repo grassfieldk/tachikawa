@@ -24,14 +24,19 @@ Node.js などのツールは mise で管理する。
 - `npm run dev`: 開発サーバー（ローカルネットワーク内からもアクセスできる）
 - `npm run check`: 型チェック
 - `npm run build` と `npm run start`: 本番ビルドと起動（待ち受けは環境変数 `HOST` と `PORT` で指定）
+- `npm run db:generate`: `db/schema.ts` の変更からマイグレーションを作る
+- `npm run db:migrate`: マイグレーションを DB に適用する
+- `npm run db:seed`: DB のデータを消して、`db/dummy.ts` のダミーデータを入れ直す
+
+DB の接続先は `.env` の `DATABASE_URL_WEB`（サイト用、読み取り専用）と `DATABASE_URL_ADMIN`（マイグレーションと投入用）で指定する。
 
 画面は React と Mantine で作る。見た目は Mantine の部品と標準のテーマに任せ、独自の CSS は書かない。
 
 - `src/pages/`: データを取得し、`src/views/` の画面に渡すだけにする
 - `src/views/`: ページごとの画面（React）
 - `src/components/`: 画面で共通に使う部品（React）
-- `src/lib/views.ts`: 画面に渡す形へデータを整える。ブラウザ側で `src/data/` を読み込まないよう、地区名の参照や現在時刻に依存する判定はここで済ませる
+- `src/lib/views.ts`: 画面に渡す形へデータを整える。現在時刻に依存する判定はここで済ませ、ブラウザ側では計算しない
 
 画面の文言は事実だけを簡潔に書き、キャッチコピーのような表現は使わない。
 
-表示しているデータは `src/data/` のダミーデータ。データの取り出し口は `src/data/index.ts` に集約している。
+DB に入っているのは `db/dummy.ts` のダミーデータ。画面は `src/data/index.ts` の関数だけを通して DB を読む。

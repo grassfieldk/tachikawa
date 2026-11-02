@@ -1,13 +1,18 @@
-// データの取り出し口。DB に切り替えるときはこのファイルの中身だけ差し替える
-import { addDays, startOfJstDay, thisWeekendRange } from '../lib/dates';
-import { areas, articles, changes, events, places, sources } from './dummy';
+// データの取り出し口。画面はこのファイルの関数だけを通して DB を読む
+import { and, asc, desc, eq, ilike, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { areas, articles, events, fetchRuns, placeChanges, places, sources } from '../../db/schema';
+import { MAP_CENTER } from '../config';
+import { addDays, fromDateOnly, startOfJstDay, thisWeekendRange } from '../lib/dates';
+import { db } from './db';
 import type {
+  AreaRef,
   Area,
   AreaSummary,
   Article,
   ArticleCategory,
   EventCategory,
   EventItem,
+  FetchStatus,
   Place,
   PlaceChange,
   PlaceChangeType,
@@ -17,134 +22,302 @@ import type {
 
 export type EventWhen = 'today' | 'weekend' | 'week' | 'month' | 'upcoming' | 'past';
 
-const limited = <T>(items: T[], limit?: number) => (limit === undefined ? items : items.slice(0, limit));
+const areaRef = (code: string | null, name: string | null): AreaRef | null =>
+  code !== null && name !== null ? { code, name } : null;
 
-// 地区の指定がないときは undefined、存在しない地区なら null
-function areaIdOf(areaSlug?: string): number | null | undefined {
-  if (areaSlug === undefined) return undefined;
-  return areas.find((a) => a.code === areaSlug)?.id ?? null;
-}
+const dateOrNull = (value: string | null) => (value === null ? null : fromDateOnly(value));
+
+// LIKE の特殊文字をエスケープして部分一致のパターンにする
+const contains = (word: string) => `%${word.replace(/[\\%_]/g, '\\$&')}%`;
 
 // 終了日時がないイベントは、終日ならその日の終わり、それ以外は開始時刻で終わったものとみなす
-function endOf(e: EventItem): Date {
-  if (e.endsAt) return e.endsAt;
-  return e.allDay ? addDays(startOfJstDay(e.startsAt), 1) : e.startsAt;
-}
+const eventEnd = sql`coalesce(${events.endsAt}, case when ${events.allDay}
+  then ((${events.startsAt} at time zone 'Asia/Tokyo')::date + 1)::timestamp at time zone 'Asia/Tokyo'
+  else ${events.startsAt} end)`;
 
-const overlaps = (e: EventItem, from: Date, to: Date) =>
-  e.startsAt.getTime() < to.getTime() && endOf(e).getTime() >= from.getTime();
+const overlaps = (from: Date, to: Date) =>
+  and(sql`${events.startsAt} < ${to.toISOString()}`, sql`${eventEnd} >= ${from.toISOString()}`);
 
-function matchesWhen(e: EventItem, when: EventWhen, now: Date): boolean {
+function whenCondition(when: EventWhen, now: Date): SQL | undefined {
   switch (when) {
     case 'today': {
       const today = startOfJstDay(now);
-      return overlaps(e, today, addDays(today, 1));
+      return overlaps(today, addDays(today, 1));
     }
     case 'weekend': {
       const [from, to] = thisWeekendRange();
-      return overlaps(e, from, to);
+      return overlaps(from, to);
     }
     case 'week':
-      return overlaps(e, now, addDays(now, 7));
+      return overlaps(now, addDays(now, 7));
     case 'month':
-      return overlaps(e, now, addDays(now, 30));
+      return overlaps(now, addDays(now, 30));
     case 'upcoming':
-      return endOf(e).getTime() >= now.getTime();
+      return sql`${eventEnd} >= ${now.toISOString()}`;
     case 'past':
-      return endOf(e).getTime() < now.getTime();
+      return sql`${eventEnd} < ${now.toISOString()}`;
   }
 }
 
-export function areaOf(areaId: number | null): Area | undefined {
-  return areaId === null ? undefined : areas.find((a) => a.id === areaId);
+const eventColumns = {
+  id: events.id,
+  sourceId: events.sourceId,
+  sourceName: sources.name,
+  sourceUrl: events.sourceUrl,
+  title: events.title,
+  description: events.description,
+  startsAt: events.startsAt,
+  endsAt: events.endsAt,
+  allDay: events.allDay,
+  venueName: events.venueName,
+  address: events.address,
+  location: events.location,
+  areaId: events.areaId,
+  areaCode: areas.code,
+  areaName: areas.name,
+  category: events.category,
+  status: events.status,
+  feeText: events.feeText,
+  organizer: events.organizer,
+};
+
+function selectEvents(where: (SQL | undefined)[]) {
+  return db
+    .select(eventColumns)
+    .from(events)
+    .innerJoin(sources, eq(sources.id, events.sourceId))
+    .leftJoin(areas, eq(areas.id, events.areaId))
+    .where(and(isNull(events.mergedIntoId), ...where))
+    .$dynamic();
 }
 
-export function sourceOf(sourceId: number): Source | undefined {
-  return sources.find((s) => s.id === sourceId);
+function toEvent({ areaCode, areaName, ...e }: Awaited<ReturnType<typeof selectEvents>>[number]): EventItem {
+  return { ...e, area: areaRef(areaCode, areaName) };
 }
+
+const articleColumns = {
+  id: articles.id,
+  sourceId: articles.sourceId,
+  sourceName: sources.name,
+  sourceUrl: articles.sourceUrl,
+  title: articles.title,
+  summary: articles.summary,
+  category: articles.category,
+  publishedAt: articles.publishedAt,
+};
+
+function selectArticles(where: (SQL | undefined)[]) {
+  return db
+    .select(articleColumns)
+    .from(articles)
+    .innerJoin(sources, eq(sources.id, articles.sourceId))
+    .where(and(...where))
+    .orderBy(desc(articles.publishedAt))
+    .$dynamic();
+}
+
+const placeColumns = {
+  id: places.id,
+  name: places.name,
+  kind: places.kind,
+  category: places.category,
+  address: places.address,
+  location: places.location,
+  areaId: places.areaId,
+  areaCode: areas.code,
+  areaName: areas.name,
+  status: places.status,
+  openedOn: places.openedOn,
+  closedOn: places.closedOn,
+  websiteUrl: places.websiteUrl,
+  attributes: places.attributes,
+};
+
+function selectPlaces(where: (SQL | undefined)[]) {
+  return db
+    .select(placeColumns)
+    .from(places)
+    .leftJoin(areas, eq(areas.id, places.areaId))
+    .where(and(...where))
+    .orderBy(asc(places.id))
+    .$dynamic();
+}
+
+function toPlace({
+  areaCode,
+  areaName,
+  openedOn,
+  closedOn,
+  ...p
+}: Awaited<ReturnType<typeof selectPlaces>>[number]): Place {
+  return {
+    ...p,
+    area: areaRef(areaCode, areaName),
+    openedOn: dateOrNull(openedOn),
+    closedOn: dateOrNull(closedOn),
+  };
+}
+
+// 地区の指定がなければ条件なし。存在しない地区を指定したときは該当なしになる
+const areaCondition = (column: typeof events.areaId | typeof places.areaId, areaSlug?: string) =>
+  areaSlug === undefined
+    ? undefined
+    : eq(column, sql`(select ${areas.id} from ${areas} where ${areas.code} = ${areaSlug})`);
 
 export async function listEvents(
   opts: { when?: EventWhen; category?: EventCategory; areaSlug?: string; limit?: number } = {},
 ): Promise<EventItem[]> {
   const { when = 'upcoming', category, limit } = opts;
-  const areaId = areaIdOf(opts.areaSlug);
-  const now = new Date();
-  const items = events
-    .filter((e) => matchesWhen(e, when, now))
-    .filter((e) => !category || e.category === category)
-    .filter((e) => areaId === undefined || e.areaId === areaId)
-    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
-  if (when === 'past') items.reverse();
-  return limited(items, limit);
+  const query = selectEvents([
+    whenCondition(when, new Date()),
+    category ? eq(events.category, category) : undefined,
+    areaCondition(events.areaId, opts.areaSlug),
+  ]).orderBy(when === 'past' ? desc(events.startsAt) : asc(events.startsAt));
+  const rows = await (limit === undefined ? query : query.limit(limit));
+  return rows.map(toEvent);
 }
 
 export async function getEvent(id: number): Promise<EventItem | null> {
-  return events.find((e) => e.id === id) ?? null;
+  const [row] = await selectEvents([eq(events.id, id)]);
+  return row ? toEvent(row) : null;
 }
 
 export async function listArticles(
   opts: { category?: ArticleCategory; limit?: number } = {},
 ): Promise<Article[]> {
-  const items = articles
-    .filter((a) => !opts.category || a.category === opts.category)
-    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
-  return limited(items, opts.limit);
+  const query = selectArticles([opts.category ? eq(articles.category, opts.category) : undefined]);
+  return opts.limit === undefined ? query : query.limit(opts.limit);
 }
 
 export async function listChanges(
   opts: { type?: PlaceChangeType; limit?: number } = {},
 ): Promise<PlaceChange[]> {
-  const items = changes
-    .filter((c) => !opts.type || c.changeType === opts.type)
-    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
-  return limited(items, opts.limit);
-}
-
-export async function listPlaces(opts: { kind?: PlaceKind; areaSlug?: string } = {}): Promise<Place[]> {
-  const areaId = areaIdOf(opts.areaSlug);
-  return places
-    .filter((p) => !opts.kind || p.kind === opts.kind)
-    .filter((p) => areaId === undefined || p.areaId === areaId);
-}
-
-export async function getPlace(id: number): Promise<Place | null> {
-  return places.find((p) => p.id === id) ?? null;
-}
-
-export async function listAreas(): Promise<AreaSummary[]> {
-  const now = new Date();
-  return areas.map((a) => ({
-    ...a,
-    placeCount: places.filter((p) => p.areaId === a.id).length,
-    upcomingEventCount: events.filter((e) => e.areaId === a.id && matchesWhen(e, 'upcoming', now)).length,
+  const query = db
+    .select({
+      id: placeChanges.id,
+      placeId: placeChanges.placeId,
+      placeName: placeChanges.placeName,
+      changeType: placeChanges.changeType,
+      effectiveOn: placeChanges.effectiveOn,
+      areaId: placeChanges.areaId,
+      areaCode: areas.code,
+      areaName: areas.name,
+      sourceUrl: placeChanges.sourceUrl,
+      publishedAt: placeChanges.publishedAt,
+      note: placeChanges.note,
+    })
+    .from(placeChanges)
+    .leftJoin(areas, eq(areas.id, placeChanges.areaId))
+    .where(
+      and(eq(placeChanges.confirmed, true), opts.type ? eq(placeChanges.changeType, opts.type) : undefined),
+    )
+    .orderBy(desc(placeChanges.publishedAt))
+    .$dynamic();
+  const rows = await (opts.limit === undefined ? query : query.limit(opts.limit));
+  return rows.map(({ areaCode, areaName, effectiveOn, ...c }) => ({
+    ...c,
+    area: areaRef(areaCode, areaName),
+    effectiveOn: dateOrNull(effectiveOn),
   }));
 }
 
-export async function getArea(code: string): Promise<Area | null> {
-  return areas.find((a) => a.code === code) ?? null;
+export async function listPlaces(opts: { kind?: PlaceKind; areaSlug?: string } = {}): Promise<Place[]> {
+  const rows = await selectPlaces([
+    opts.kind ? eq(places.kind, opts.kind) : undefined,
+    areaCondition(places.areaId, opts.areaSlug),
+  ]);
+  return rows.map(toPlace);
 }
 
+export async function getPlace(id: number): Promise<Place | null> {
+  const [row] = await selectPlaces([eq(places.id, id)]);
+  return row ? toPlace(row) : null;
+}
+
+const areaColumns = {
+  id: areas.id,
+  code: areas.code,
+  name: areas.name,
+  summary: areas.summary,
+  features: areas.features,
+  center: areas.center,
+};
+
+const toArea = <T extends { center: Area['center'] | null }>(a: T) => ({ ...a, center: a.center ?? MAP_CENTER });
+
+export async function listAreas(): Promise<AreaSummary[]> {
+  const rows = await db
+    .select({
+      ...areaColumns,
+      placeCount: sql<number>`(select count(*) from places where places.area_id = areas.id)`.mapWith(Number),
+      upcomingEventCount: sql<number>`(select count(*) from events
+        where events.area_id = areas.id and events.merged_into_id is null and ${eventEnd} >= now())`.mapWith(
+        Number,
+      ),
+    })
+    .from(areas)
+    .orderBy(asc(areas.id));
+  return rows.map(toArea);
+}
+
+export async function getArea(code: string): Promise<Area | null> {
+  const [row] = await db.select(areaColumns).from(areas).where(eq(areas.code, code));
+  return row ? toArea(row) : null;
+}
+
+// 最後に終わった収集の状態と、最後に取得できた（一部のみを含む）日時
+// 単一テーブルの select では列名がテーブル名なしで展開されるため、相関サブクエリは列名を直接書く
+const lastStatus = sql<FetchStatus | null>`(select r.status from fetch_runs r
+  where r.source_id = sources.id and r.finished_at is not null
+  order by r.finished_at desc limit 1)`;
+const lastSuccessAt = sql`(select max(r.finished_at) from fetch_runs r
+  where r.source_id = sources.id and r.status in ('success', 'partial'))`.mapWith(fetchRuns.finishedAt);
+
 export async function listSources(): Promise<Source[]> {
-  return sources;
+  const rows = await db
+    .select({
+      id: sources.id,
+      slug: sources.slug,
+      name: sources.name,
+      kind: sources.kind,
+      url: sources.url,
+      intervalMinutes: sources.intervalMinutes,
+      lastStatus,
+      lastSuccessAt,
+      termsCheckedOn: sources.termsCheckedOn,
+    })
+    .from(sources)
+    .where(eq(sources.enabled, true))
+    .orderBy(asc(sources.id));
+  return rows.map((s) => ({ ...s, termsCheckedOn: dateOrNull(s.termsCheckedOn) }));
 }
 
 // 情報源のうち、最後に収集に成功した日時
 export async function lastUpdatedAt(): Promise<Date | null> {
-  const times = sources.flatMap((s) => (s.lastSuccessAt ? [s.lastSuccessAt.getTime()] : []));
-  return times.length > 0 ? new Date(Math.max(...times)) : null;
+  const [row] = await db
+    .select({ at: sql`max(${fetchRuns.finishedAt})`.mapWith(fetchRuns.finishedAt) })
+    .from(fetchRuns)
+    .where(sql`${fetchRuns.status} in ('success', 'partial')`);
+  return row?.at ?? null;
 }
 
 export async function search(
   q: string,
 ): Promise<{ articles: Article[]; events: EventItem[]; places: Place[] }> {
-  const word = q.trim().toLowerCase();
+  const word = q.trim();
   if (!word) return { articles: [], events: [], places: [] };
-  const hit = (...texts: (string | null)[]) => texts.some((t) => t?.toLowerCase().includes(word));
-  return {
-    articles: (await listArticles()).filter((a) => hit(a.title, a.summary)),
-    events: events
-      .filter((e) => hit(e.title, e.description, e.venueName, e.organizer))
-      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime()),
-    places: places.filter((p) => hit(p.name, p.category, p.address)),
-  };
+  const pattern = contains(word);
+  const [articleRows, eventRows, placeRows] = await Promise.all([
+    selectArticles([or(ilike(articles.title, pattern), ilike(articles.summary, pattern))]),
+    selectEvents([
+      or(
+        ilike(events.title, pattern),
+        ilike(events.description, pattern),
+        ilike(events.venueName, pattern),
+        ilike(events.organizer, pattern),
+      ),
+    ]).orderBy(asc(events.startsAt)),
+    selectPlaces([or(ilike(places.name, pattern), ilike(places.category, pattern), ilike(places.address, pattern))]),
+  ]);
+  return { articles: articleRows, events: eventRows.map(toEvent), places: placeRows.map(toPlace) };
 }

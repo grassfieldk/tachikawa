@@ -37,3 +37,13 @@ export function thisWeekendRange(): [Date, Date] {
   const start = addDays(today, toSat);
   return [start, addDays(start, 2)];
 }
+
+// DB の date 型（YYYY-MM-DD）と、日本時間のその日 0 時の Date を相互に変換する
+export function fromDateOnly(value: string): Date {
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d) - JST_OFFSET_MS);
+}
+
+export function toDateOnly(date: Date): string {
+  return new Date(date.getTime() + JST_OFFSET_MS).toISOString().slice(0, 10);
+}

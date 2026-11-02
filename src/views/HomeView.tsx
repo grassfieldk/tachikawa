@@ -87,7 +87,7 @@ export default function HomeView(p: Props) {
                   </Text>
                   {p.failedSources.map((s) => (
                     <Text key={s.id} size="sm">
-                      {s.name}（{FETCH_STATUSES[s.lastStatus]}）
+                      {s.name}{s.lastStatus && `（${FETCH_STATUSES[s.lastStatus]}）`}
                     </Text>
                   ))}
                 </Stack>

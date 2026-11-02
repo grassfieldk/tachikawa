@@ -274,9 +274,13 @@ export function AboutView({ sources }: { sources: SourceView[] }) {
                     <Table.Td>{SOURCE_KINDS[s.kind]}</Table.Td>
                     <Table.Td>{INTERVAL(s.intervalMinutes)}</Table.Td>
                     <Table.Td>
-                      <Badge variant="dot" color={STATUS_COLOR[s.lastStatus]}>
-                        {FETCH_STATUSES[s.lastStatus]}
-                      </Badge>
+                      {s.lastStatus ? (
+                        <Badge variant="dot" color={STATUS_COLOR[s.lastStatus]}>
+                          {FETCH_STATUSES[s.lastStatus]}
+                        </Badge>
+                      ) : (
+                        '-'
+                      )}
                     </Table.Td>
                     <Table.Td>
                       {s.lastSuccessAt ? (

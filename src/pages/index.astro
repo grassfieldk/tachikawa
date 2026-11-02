@@ -35,7 +35,7 @@ const markers = [
     articles={articles.map((a) => articleView(a, now))}
     alerts={alerts.map((a) => articleView(a, now))}
     changes={changes.map((c) => changeView(c, now))}
-    failedSources={sources.filter((s) => s.lastStatus !== 'success').map((s) => sourceView(s, now))}
+    failedSources={sources.filter((s) => s.lastStatus === 'partial' || s.lastStatus === 'failed').map((s) => sourceView(s, now))}
     updated={updated ? formatDateTime(updated) : null}
     markers={markers}
   />

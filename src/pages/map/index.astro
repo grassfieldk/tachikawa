@@ -4,7 +4,7 @@ import { PLACE_KINDS } from '../../data/labels';
 import type { PlaceKind } from '../../data/types';
 import Base from '../../layouts/Base.astro';
 import { eventMarkers, placeMarkers } from '../../lib/markers';
-import { eventView, placeView } from '../../lib/views';
+import { eventView } from '../../lib/views';
 import { MapPageView } from '../../views/ListViews';
 
 const param = Astro.url.searchParams.get('kind');
@@ -26,7 +26,7 @@ const now = new Date();
   <MapPageView
     client:load
     markers={markers}
-    places={places.map(placeView)}
+    places={places}
     events={events.map((e) => eventView(e, now))}
     fields={[{ label: '表示', param: 'kind', options }]}
     search={Astro.url.search}
