@@ -1,0 +1,16 @@
+[Unit]
+Description=tachikawa web
+Wants=network-online.target
+After=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@WORKDIR@
+Environment=PATH=@MISE_SHIMS@:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/env npm run --silent start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

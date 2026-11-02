@@ -26,7 +26,9 @@ Node.js などのツールは mise で管理する。
 - `npm run build` と `npm run start`: 本番ビルドと起動（待ち受けは環境変数 `HOST` と `PORT` で指定）
 - `npm run db:generate`: `db/schema.ts` の変更からマイグレーションを作る
 - `npm run db:migrate`: マイグレーションを DB に適用する
-- `npm run db:seed`: DB のデータを消して、`db/dummy.ts` のダミーデータを入れ直す
+- `npm run db:seed`: DB のデータを収集したものも含めて消し、`db/dummy.ts` のダミーデータを入れ直す
+- `npm run collect`: 収集間隔を過ぎた情報源を収集する。`npm run collect -- <slug>` で指定した情報源をすぐに収集する
+- `deploy/install.sh [collect|web]`: `deploy/` の雛形から systemd の設定を `deploy/local/` に生成し、登録して起動する。collect は 5 分ごとの timer で `npm run collect` を実行し、web は `npm run start` を常駐させる（事前に `npm run build` が必要）
 
 DB の接続先は `.env` の `DATABASE_URL_WEB`（サイト用、読み取り専用）と `DATABASE_URL_ADMIN`（マイグレーションと投入用）で指定する。
 
@@ -39,4 +41,4 @@ DB の接続先は `.env` の `DATABASE_URL_WEB`（サイト用、読み取り�
 
 画面の文言は事実だけを簡潔に書き、キャッチコピーのような表現は使わない。
 
-DB に入っているのは `db/dummy.ts` のダミーデータ。画面は `src/data/index.ts` の関数だけを通して DB を読む。
+収集処理は `collector/` にあり、情報源ごとの定義を `collector/sources/` に置いて `collector/run.ts` の一覧に加える。お知らせは立川市公式サイトの RSS から収集し、それ以外は `db/dummy.ts` のダミーデータ。画面は `src/data/index.ts` の関数だけを通して DB を読む。

@@ -38,16 +38,16 @@ src/             Astro サイト（pages、components、DB アクセス）
 content/         Markdown の固定記事（歴史、地区ガイド、年表）
 collector/       収集スクリプト（ソースごとに 1 ファイル）
 db/              Drizzle のスキーマとマイグレーション
-deploy/          systemd や compose の雛形（プレースホルダのみ）
+deploy/          systemd の雛形（プレースホルダのみ）と登録用のスクリプト
 ```
 
 ## プロセス
 
 - web: 常駐させ、localhost だけで待ち受ける。Tunnel がここへ転送する
-- collector: 定期実行する。ソースごとに取得と整形の処理を持ち、結果を DB に書き込む
+- collector: systemd の timer で 5 分ごとに起動する。収集間隔を過ぎた情報源だけを収集し、結果を DB に書き込む。収集の結果は情報源ごとに fetch_runs に記録する
 - DB: localhost だけで待ち受ける。外部には公開しない
 
-ソースを追加するときは、`collector/` に取得と整形の処理を足し、`sources` テーブルに登録する。
+ソースを追加するときは、`collector/sources/` に取得と整形の処理を足し、`collector/run.ts` の一覧に加える。`sources` テーブルへの登録は収集時に定義の内容で行う。
 
 ## DB ロール
 

@@ -2,7 +2,6 @@
 import { jstDate, nextWeekday } from '../src/lib/dates';
 import type {
   Area,
-  Article as ArticleItem,
   EventItem as EventFull,
   Place as PlaceFull,
   PlaceChange as PlaceChangeFull,
@@ -10,7 +9,6 @@ import type {
 } from '../src/data/types';
 
 // 地区名と情報源名は DB から読むときに結合するため、ここでは持たない
-type Article = Omit<ArticleItem, 'sourceName'>;
 type EventItem = Omit<EventFull, 'area' | 'sourceName'>;
 type Place = Omit<PlaceFull, 'area'>;
 type PlaceChange = Omit<PlaceChangeFull, 'area'>;
@@ -18,17 +16,6 @@ type PlaceChange = Omit<PlaceChangeFull, 'area'>;
 const minutesAgo = (min: number) => new Date(Date.now() - min * 60 * 1000);
 
 export const sources: Source[] = [
-  {
-    id: 1,
-    slug: 'city-news',
-    name: '立川市 お知らせ',
-    kind: 'rss',
-    url: 'https://example.com/city/news.rss',
-    intervalMinutes: 60,
-    lastStatus: 'success',
-    lastSuccessAt: minutesAgo(25),
-    termsCheckedOn: jstDate(-60),
-  },
   {
     id: 2,
     slug: 'city-events',
@@ -494,43 +481,6 @@ export const events: EventItem[] = [
     ...KOMOREBI,
     category: 'culture',
   }),
-];
-
-const article = (
-  id: number,
-  daysAgo: number,
-  hour: number,
-  category: Article['category'],
-  title: string,
-  summary: string | null,
-  sourceId = 1,
-): Article => ({
-  id,
-  sourceId,
-  sourceUrl: `https://example.com/city/news/${id}`,
-  title,
-  summary,
-  category,
-  publishedAt: jstDate(-daysAgo, hour),
-});
-
-export const articles: Article[] = [
-  {
-    ...article(1, 0, 0, 'safety', '多摩地域に大雨注意報が出ています', '夜にかけて激しい雨のおそれ。川や用水路に近づかないでください', 3),
-    publishedAt: minutesAgo(5 * 60),
-  },
-  article(2, 1, 9, 'life', '祝日週のごみ収集日が変わります', '祝日を含む週は、可燃ごみの収集日が 1 日ずれます'),
-  article(3, 2, 10, 'city', '市議会定例会の日程', '定例会の会期と、傍聴の申込み方法'),
-  article(4, 3, 9, 'kids', '来年度の保育園入園申込みを受け付けます', '申込書の配布は市役所と各市民センターで行います'),
-  article(5, 4, 14, 'welfare', 'インフルエンザ予防接種の費用を助成します', '65 歳以上の方が対象です'),
-  article(6, 8, 10, 'safety', '総合防災訓練を実施します', '各避難所で開設訓練を行います', 3),
-  article(7, 10, 11, 'life', '粗大ごみ受付センターの電話番号が変わります', null),
-  article(8, 12, 9, 'notice', '市役所窓口の臨時休業', 'システム更新のため、一部の窓口を休業します'),
-  article(9, 18, 15, 'city', '自転車活用推進計画の案について意見を募集します', '計画案は市役所と市のサイトで閲覧できます'),
-  article(10, 25, 10, 'kids', '図書館のおはなし会', '毎週土曜の午前に、絵本の読み聞かせを行います'),
-  article(11, 33, 9, 'notice', '曙町で道路工事を行います', null),
-  article(12, 40, 13, 'welfare', '特定健康診査のご案内', '対象の方には受診券を送付しています'),
-  article(13, 50, 10, 'life', 'ウォーキングマップを配布しています', '市内の散歩コースをまとめた冊子です'),
 ];
 
 export const changes: PlaceChange[] = [

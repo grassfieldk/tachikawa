@@ -1,0 +1,11 @@
+[Unit]
+Description=tachikawa collector
+Wants=network-online.target
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=@USER@
+WorkingDirectory=@WORKDIR@
+Environment=PATH=@MISE_SHIMS@:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/env npm run --silent collect

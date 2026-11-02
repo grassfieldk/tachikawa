@@ -1,16 +1,11 @@
-// ダミーデータを DB に入れ直す。既存のデータはすべて消える
+// ダミーデータを DB に入れ直す。収集したデータを含め、既存のデータはすべて消える
 import { getTableName, sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { toDateOnly } from '../src/lib/dates';
 import * as dummy from './dummy';
+import { connect } from './client';
 import { areas, articles, events, fetchRuns, placeChanges, places, sources } from './schema';
 
-const url = process.env.DATABASE_URL_ADMIN;
-if (!url) throw new Error('DATABASE_URL_ADMIN が設定されていません');
-
-const client = postgres(url, { onnotice: () => {} });
-const db = drizzle(client, { casing: 'snake_case' });
+const { db, client } = connect();
 
 const dateOnly = (d: Date | null) => (d === null ? null : toDateOnly(d));
 
@@ -82,7 +77,6 @@ await db.transaction(async (tx) => {
   );
 
   await tx.insert(events).values(dummy.events);
-  await tx.insert(articles).values(dummy.articles);
   await tx.insert(placeChanges).values(
     dummy.changes.map((c) => ({ ...c, effectiveOn: dateOnly(c.effectiveOn), confirmed: true })),
   );
